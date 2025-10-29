@@ -7,6 +7,8 @@ import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.StateGraph;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.bsc.langgraph4j.state.AgentState;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.oracle.OracleContainer;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -20,8 +22,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.testcontainers.oracle.OracleContainer;
 
 public class OracleSaverTest {
 
@@ -196,7 +196,6 @@ public class OracleSaverTest {
         assertEquals(2, history.size());
 
         lastSnapshot = workflow.stateOf(updatedConfig);
-        // lastSnapshot = workflow.lastStateOf( runnableConfig );
 
         assertTrue(lastSnapshot.isPresent());
         assertEquals("agent_1", lastSnapshot.get().node());

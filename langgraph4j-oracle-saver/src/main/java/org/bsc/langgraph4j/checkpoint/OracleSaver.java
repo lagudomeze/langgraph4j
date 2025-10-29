@@ -94,7 +94,7 @@ public class OracleSaver extends MemorySaver {
                    REFERENCES LANGRAPH4J_THREAD(thread_id)
                    ON DELETE CASCADE
             )""";
-    private static final String DROP_THREAD_INDEX = "DROP INDEX IDX_LANGRAPH4J_THREAD_NAME_RELEASED";
+    private static final String DROP_THREAD_INDEX = "DROP INDEX IF EXISTS IDX_LANGRAPH4J_THREAD_NAME_RELEASED";
     private static final String DROP_THREAD_TABLE = "DROP TABLE IF EXISTS LANGRAPH4J_THREAD CASCADE CONSTRAINTS";
     private static final String DROP_CHECKPOINT_TABLE = "DROP TABLE IF EXISTS LANGRAPH4J_CHECKPOINT CASCADE CONSTRAINTS";
 
