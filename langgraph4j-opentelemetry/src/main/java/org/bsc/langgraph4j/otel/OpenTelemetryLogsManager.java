@@ -106,6 +106,8 @@ public class OpenTelemetryLogsManager implements Closeable {
             var exporter = switch( requireNonNull(this.recordExporter, "exporter cannot be null" )) {
                 case GRPC -> OtlpGrpcLogRecordExporter.builder()
                                 .setEndpoint(requireNonNull(endpoint, "endpoint cannot be null").toString())
+                                .setCompression("gzip")
+                                .setTimeout( 500, java.util.concurrent.TimeUnit.MILLISECONDS)
                                 .build();
                 case HTTP -> OtlpHttpLogRecordExporter.builder()
                                 .setEndpoint(requireNonNull(endpoint, "endpoint cannot be null").toString())

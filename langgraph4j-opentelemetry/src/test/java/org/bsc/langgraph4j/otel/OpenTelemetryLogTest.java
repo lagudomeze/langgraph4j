@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Paths;
 
 
@@ -21,9 +22,12 @@ public class OpenTelemetryLogTest {
 
         // Initialize OpenTelemetry
         otelManager = OpenTelemetryLogsManager.builder()
-                            .internalHttpLogsCollector(  OpenTelemetryInternalHttpLogsCollector.builder()
-                                    .outputFile( Paths.get("target", "otlp-logs.json"))
-                                    .build())
+//                            .internalHttpLogsCollector(  OpenTelemetryInternalHttpLogsCollector.builder()
+//                                    .outputFile( Paths.get("target", "otlp-logs.json"))
+//                                    .build())
+                            .recordExporter(OpenTelemetryLogsManager.RecordExporter.GRPC)
+                            .endpoint( new URL("http://localhost:4317") )
+                            .setAsGlobal(true)
                             .build();
 
     }
@@ -35,12 +39,21 @@ public class OpenTelemetryLogTest {
 
 
     @Test
-    public void testLogWithOpenTelemetry() {
+    public void testLogWithOpenTelemetry() throws Exception {
 
-        // Use SLF4j as normal - logs will be sent to OpenTelemetry
-        logger.info("Application started");
-        logger.warn("This is a warning with trace context");
-        logger.error("Error occurred", new RuntimeException("Example error"));
+        for( int i=0; i<10; i++ ) {
+
+            // Use SLF4j as normal - logs will be sent to OpenTelemetry
+            logger.info("Application started ({})", i);
+            logger.warn("This is a warning with trace context ({})", i);
+            //logger.error("Error occurred", new RuntimeException("Example error"));
+            logger.atError()
+                    .setCause(new RuntimeException("Example error"))
+                    .log( "Error occurred ({})", i)
+            ;
+
+            Thread.sleep( 1000 );
+        }
 
 
     }
