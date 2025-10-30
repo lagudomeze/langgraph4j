@@ -21,13 +21,13 @@ import static java.util.Optional.ofNullable;
 public class OpenTelemetryLogsManager implements Closeable {
 
     private final OpenTelemetry sdk;
-    private final OpenTelemetryInternalHttpLogsCollector internalHttpLogsCollector;
+    private final OpenTelemetryInternalHttpCollector internalHttpLogsCollector;
 
     public static Builder builder() {
         return new Builder();
     }
 
-    private OpenTelemetryLogsManager(OpenTelemetry sdk, OpenTelemetryInternalHttpLogsCollector internalHttpLogsCollector ) {
+    private OpenTelemetryLogsManager(OpenTelemetry sdk, OpenTelemetryInternalHttpCollector internalHttpLogsCollector ) {
         this.sdk = sdk;
         this.internalHttpLogsCollector = internalHttpLogsCollector;
     }
@@ -59,7 +59,7 @@ public class OpenTelemetryLogsManager implements Closeable {
         private String serviceVersion;
         private RecordExporter recordExporter = RecordExporter.HTTP_INTERNAL;
         private URL endpoint;
-        private OpenTelemetryInternalHttpLogsCollector internalHttpLogsCollector;
+        private OpenTelemetryInternalHttpCollector internalHttpLogsCollector;
 
         public Builder setAsGlobal( boolean setAsGlobal ) {
             this.setAsGlobal = setAsGlobal;
@@ -86,7 +86,7 @@ public class OpenTelemetryLogsManager implements Closeable {
             return this;
         }
 
-        public Builder internalHttpLogsCollector(OpenTelemetryInternalHttpLogsCollector httpLogsCollector ) {
+        public Builder internalHttpLogsCollector(OpenTelemetryInternalHttpCollector httpLogsCollector ) {
             this.internalHttpLogsCollector = httpLogsCollector;
             return this;
         }
@@ -113,7 +113,7 @@ public class OpenTelemetryLogsManager implements Closeable {
                                 .setEndpoint(requireNonNull(endpoint, "endpoint cannot be null").toString())
                                 .build();
                 case HTTP_INTERNAL-> OtlpHttpLogRecordExporter.builder()
-                                .setEndpoint(internalHttpLogsCollector.endpoint().toString())
+                                .setEndpoint(internalHttpLogsCollector.logsEndpoint().toString())
                                 .addHeader("Content-Type", "application/json")
                                 .build();
             };
