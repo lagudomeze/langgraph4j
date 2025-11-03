@@ -5,36 +5,44 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Paths;
 
 
-public class OpenTelemetryLogTest {
+public class OTELLogAITest {
 
     private static final Logger logger = LoggerFactory.getLogger("OTEL");
 
-    private static OpenTelemetryLogsManager otelManager;
+    private static OTEL otel;
+    private static ComposeContainer compose;
 
     @BeforeAll
     public static void initialize() throws IOException {
 
+        compose = new ComposeContainer(
+                DockerImageName.parse("docker:24.0.2"),
+                Paths.get( "src", "docker", "docker-compose.yml").toFile()
+        );
+
+        compose.start();
+
         // Initialize OpenTelemetry
-        otelManager = OpenTelemetryLogsManager.builder()
-//                            .internalHttpLogsCollector(  OpenTelemetryInternalHttpLogsCollector.builder()
-//                                    .outputFile( Paths.get("target", "otlp-logs.json"))
-//                                    .build())
-                            .recordExporter(OpenTelemetryLogsManager.RecordExporter.GRPC)
-                            .endpoint( new URL("http://localhost:4317") )
-                            .setAsGlobal(true)
-                            .build();
+        otel = OTEL.builder()
+                            .exporterLogger( new OTEL.Exporter(
+                                    OTEL.Exporter.Protocol.GRPC,
+                                    "http://localhost:4317" ) )
+                            .buildAsGlobal();
 
     }
 
     @AfterAll
     public static void shutdown() throws IOException {
-        otelManager.close();
+        otel.close();
+
+        compose.stop();
     }
 
 

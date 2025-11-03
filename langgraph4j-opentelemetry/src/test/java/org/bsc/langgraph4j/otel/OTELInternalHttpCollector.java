@@ -19,7 +19,7 @@ import java.nio.file.StandardOpenOption;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
-public class OpenTelemetryInternalHttpCollector {
+public class OTELInternalHttpCollector {
 
     public static final String LOGS = "/logs";
     public static final String TRACES = "/traces";
@@ -30,7 +30,7 @@ public class OpenTelemetryInternalHttpCollector {
         return new Builder();
     }
 
-    public OpenTelemetryInternalHttpCollector(Builder builder ) throws IOException {
+    public OTELInternalHttpCollector(Builder builder ) throws IOException {
         this.server =  HttpServer.create(new java.net.InetSocketAddress(builder.port), 0);
 
         // Create context for JSON POST requests
@@ -196,7 +196,7 @@ public class OpenTelemetryInternalHttpCollector {
             return this;
         }
 
-        public OpenTelemetryInternalHttpCollector build() throws IOException {
+        public OTELInternalHttpCollector build() throws IOException {
             requireNonNull(outputDir, "outputDir cannot be null" );
 
             var file = outputDir.toFile();
@@ -213,10 +213,10 @@ public class OpenTelemetryInternalHttpCollector {
                 throw new IllegalArgumentException("port must be greater than 0");
             }
 
-            return new OpenTelemetryInternalHttpCollector(this);
+            return new OTELInternalHttpCollector(this);
         }
 
-        public OpenTelemetryInternalHttpCollector buildAndStart() throws IOException  {
+        public OTELInternalHttpCollector buildAndStart() throws IOException  {
             var result = build();
             result.start();
             return result;
