@@ -18,7 +18,6 @@ import java.util.logging.LogManager;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.util.Collections.emptyMap;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
@@ -222,7 +221,7 @@ public class StateGraphMemorySaverTest
                 .threadId("thread_2")
                 .build();
 
-        state = app.invoke( emptyMap(), runnableConfig );
+        state = app.invoke( GraphInput.noArgs(), runnableConfig );
 
         assertTrue( state.isPresent() );
         assertEquals( expectedSteps, state.get().steps() );
@@ -236,7 +235,7 @@ public class StateGraphMemorySaverTest
         }
 
         // RE-SUBMIT THREAD 1
-        state = app.invoke( emptyMap(), runnableConfig );
+        state = app.invoke( GraphInput.noArgs(), runnableConfig );
 
         assertTrue( state.isPresent() );
         assertEquals( expectedSteps + 1, state.get().steps() );
