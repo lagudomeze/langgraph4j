@@ -70,7 +70,7 @@ Below are some examples showing how to add create branching dataflows.
 
 It is enough to associate to the same edges multiple nodes.
 
-### Example - Pefine parallel nodes
+### Example - Define parallel nodes
 
 ```java
 var workflow = new MessagesStateGraph<String>()
@@ -90,6 +90,18 @@ var workflow = new MessagesStateGraph<String>()
                 .addEdge(START, "A")
                 .addEdge("C", END)                   
                 .compile();
+
+var runnableConfig = RunnableConfig.builder()
+        // this will make A to be a parallel node
+        // all nodes connected to A, that is, (A1, A2, A3) will run in parallel after A finished
+        .addParallelNodeExecutor( "A", ForkJoinPool.commonPool() ) 
+        .build();
+
+var result = workflow.stream(Map.of(), runnableConfig) // be sure to pass runnableConfig when invoking the graph, otherwise the node will be executed sequentially!
+        .stream()
+        .peek(System.out::println)
+        .reduce((a, b) -> b)
+        .map(NodeOutput::state);
 
 ```
 
