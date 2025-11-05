@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.utils;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 @FunctionalInterface
