@@ -15,20 +15,18 @@ import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
-import org.testcontainers.containers.ComposeContainer;
 
-public class OTELObservationAutoconfigureTest implements Instrumentable {
+public class OTELObservationAutoconfigureAITest implements Instrumentable {
     private static final AttributeKey<Long> PROCESSING_TIME_ATTRIBUTE =
             AttributeKey.longKey("processing.time.ms");
 
     static OpenTelemetrySdk otel;
-    private static ComposeContainer compose;
 
     @BeforeAll
     public static void initialize() throws Exception{
 
         var props = new java.util.Properties();
-        try (var input = OTELObservationAutoconfigureTest.class.getResourceAsStream("/otel-config.properties")) {
+        try (var input = OTELObservationAutoconfigureAITest.class.getResourceAsStream("/otel-config.properties")) {
 
             assertNotNull(input, "/otel-config.properties not found in classpath");
 
