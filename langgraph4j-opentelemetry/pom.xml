@@ -14,35 +14,27 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jackson.version>2.17.2</jackson.version>
-        <testcontainers.version>2.0.1</testcontainers.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-bom</artifactId>
-                <version>${testcontainers.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
+
+        <!-- OpenTelemetry SDK -->
         <dependency>
-            <groupId>${parent.groupId}</groupId>
-            <artifactId>langgraph4j-core</artifactId>
-            <version>${parent.version}</version>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk</artifactId>
         </dependency>
 
-        <!-- Logback (SLF4j implementation) -->
+        <!-- OpenTelemetry SDK Extension Autoconfigure -->
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.20</version>
-            <scope>test</scope>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+            <version>1.55.0</version>
+        </dependency>
+
+        <!-- OpenTelemetry Exporter (e.g., OTLP) -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
         </dependency>
 
         <!-- OpenTelemetry Logback Appender -->
@@ -50,36 +42,35 @@
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-logback-appender-1.0</artifactId>
             <version>2.21.0-alpha</version>
-            <scope>test</scope>
         </dependency>
 
-        <!-- OpenTelemetry SDK -->
+        <!-- Logback (SLF4j implementation) -->
         <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk</artifactId>
-            <version>${otel.version}</version>
-            <scope>test</scope>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.20</version>
         </dependency>
 
-        <!-- OpenTelemetry Exporter (e.g., OTLP) -->
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-exporter-otlp</artifactId>
-            <version>${otel.version}</version>
-            <scope>test</scope>
-        </dependency>
-
+        <!-- required for OTELInternalHttpCollector -->
         <dependency>
             <groupId>io.opentelemetry.proto</groupId>
             <artifactId>opentelemetry-proto</artifactId>
             <version>1.8.0-alpha</version>
-            <scope>test</scope>
+            <optional>true</optional>
         </dependency>
 
+        <!-- required for OTELInternalHttpCollector -->
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
             <version>4.33.0</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>langgraph4j-core</artifactId>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
 
