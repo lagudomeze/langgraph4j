@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.utils.CollectionsUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
@@ -59,6 +60,11 @@ public final class InterruptionMetadata<State extends AgentState> implements Has
     public Optional<Object> metadata(String key) {
         return ofNullable(metadata)
                 .map( m -> m.get( key ) );
+    }
+
+    @Override
+    public Set<String> metadataKeys() {
+        return ofNullable(metadata).map( Map::keySet ).orElseGet(Set::of);
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.utils.TypeRef;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 import static java.lang.String.format;
@@ -96,6 +97,11 @@ public final class RunnableConfig implements HasMetadata {
                 .checkPointId(checkPointId)
                 .build();
 
+    }
+
+    @Override
+    public Set<String> metadataKeys() {
+        return ofNullable(metadata).map( Map::keySet ).orElseGet(Set::of);
     }
 
     /**

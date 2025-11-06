@@ -5,12 +5,14 @@ import org.bsc.langgraph4j.utils.TypeRef;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
 public interface HasMetadata {
+
     /**
      * return metadata value for key
      *
@@ -34,6 +36,15 @@ public interface HasMetadata {
     default <T> Optional<T> metadata(String key, TypeRef<T> typeRef ) {
         return metadata(key).flatMap( typeRef::cast );
     }
+
+    /**
+     * return metadata keys
+     *
+     * @since 1.8
+     * @return metadata keys if any or empty set
+     */
+    Set<String> metadataKeys();
+
 
     /**
      * return metadata value for key
