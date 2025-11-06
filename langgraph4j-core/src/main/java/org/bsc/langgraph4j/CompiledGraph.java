@@ -1,6 +1,8 @@
 package org.bsc.langgraph4j;
 
-import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.baggage.Baggage;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.*;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
@@ -85,9 +87,9 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
 
     public final CompileConfig compileConfig;
 
-    private final LongCounter cloneStateCounter;
-
     private final TracerHolder TRACER;
+
+    private Span otelStreamSpan;
 
     /**
      * Constructs a CompiledGraph with the given StateGraph.
@@ -95,14 +97,6 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
      * @param stateGraph the StateGraph to be used in this CompiledGraph
      */
     protected CompiledGraph(StateGraph<State> stateGraph, CompileConfig compileConfig ) throws GraphStateException {
-
-        var METER = meter( getClass().getName() );
-
-        cloneStateCounter = METER.countBuilder( "cloneState")
-                .setDescription( "cloneState() invocation")
-                .setUnit("Unit")
-                .build()
-                ;
 
         TRACER = tracer( getClass().getName() );
 
@@ -370,9 +364,16 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
 
     private Optional<Checkpoint> addCheckpoint( RunnableConfig config, String nodeId, Map<String,Object> state, String nextNodeId ) throws Exception {
         if( compileConfig.checkpointSaver().isPresent() ) {
+
+            var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                            .put("method", "addCheckpoint()")
+                            .build(),
+                    CompiledGraph.this::cloneState)
+                    .apply(state);
+
             var cp =  Checkpoint.builder()
                                 .nodeId( nodeId )
-                                .state( cloneState(state) )
+                                .state( clonedState )
                                 .nextNodeId( nextNodeId )
                                 .build();
             compileConfig.checkpointSaver().get().put( config, cp );
@@ -394,15 +395,29 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                 .orElseGet( () -> AgentState.updateState( getInitialStateFromSchema(), inputs, stateGraph.getChannels() ));
     }
 
-    State cloneState(Map<String,Object> data ) throws Exception {
+    State cloneState( Map<String,Object> data ) throws Exception {
 
-        return TRACER.spanBuilder( "cloneState")
-                        .startSpan( span -> {
-                            var result = stateGraph.getStateSerializer().cloneObject(data);;
-                            cloneStateCounter.add(1L);
-                            return result;
+        if( streamSpan().isPresent() ) {
 
-                        });
+            var baggage = Baggage.fromContext(Context.current());
+
+            try( var scope = streamSpan().get().makeCurrent() ) {
+                return TRACER.spanBuilder("cloneState")
+                        .setAllAttributes( baggage )
+                        .tryStartSpan( span -> stateGraph.getStateSerializer().cloneObject(data) );
+            }
+
+        }
+        else {
+            return stateGraph.getStateSerializer().cloneObject(data);
+        }
+    }
+
+    private Optional<Span> streamSpan() {
+        if( otelStreamSpan != null && otelStreamSpan.isRecording() ) {
+            return Optional.of(otelStreamSpan);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -416,9 +431,17 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
         requireNonNull(config, "config cannot be null");
         requireNonNull( input, "input cannot be null" );
 
-        final var generator = new AsyncNodeGenerator<>( input, config );
+        otelStreamSpan = TRACER.spanBuilder( "stream" )
+                .setAttribute( input )
+                .setAllAttributes( config )
+                .startSpan();
 
-        return new AsyncGenerator.WithEmbed<>( generator );
+        final var generator = new AsyncNodeGenerator<>(input, config);
+
+        return new AsyncGenerator.WithEmbed<>(generator, result  -> {
+                streamSpan().ifPresent(Span::end);
+        });
+
     }
 
     /**
@@ -669,6 +692,7 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                                  .checkPointId(null) // Reset checkpoint id
                                 .addMetadata( action.resumeSubGraphId(), true) // add metadata for sub graph
                                 .build();
+
                 }
                 else {
                     // Reset checkpoint id
@@ -689,11 +713,19 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                 this.context = new Context( initializedState.data() );
                 this.config = config.withCheckPointId( null );
             }
+
         }
 
         @SuppressWarnings("unchecked")
         protected Output buildNodeOutput(String nodeId ) throws Exception {
-            return  (Output)NodeOutput.of( nodeId, cloneState(context.currentState()) );
+
+            var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                    .put("method", "buildNodeOutput()")
+                    .build(),
+                    CompiledGraph.this::cloneState)
+                    .apply(context.currentState());
+
+            return  (Output)NodeOutput.of( nodeId, clonedState );
         }
 
         @SuppressWarnings("unchecked")
@@ -747,8 +779,16 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
         }
 
         private CompletableFuture<Data<Output>> evaluateAction( AsyncNodeActionWithConfig<State> action ) {
+
                 try {
-                    return action.apply( cloneState(context.currentState()), config)
+
+                    var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                            .put("method", "evaluateAction()")
+                            .build(),
+                            CompiledGraph.this::cloneState)
+                            .apply(context.currentState());
+
+                    return action.apply( clonedState, config)
                             .thenApply(TryFunction.Try(updateState -> {
 
 
@@ -836,15 +876,12 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                             buildNodeOutput( context.currentNodeId() );
 
                     context.setCurrentNodeId(context.nextNodeId());
-                    //currentNodeId = nextNodeId;
 
                     return Data.of( output );
                 }
 
                 if( END.equals(context.nextNodeId()) ) {
                     context.reset();
-                    //nextNodeId = null;
-                    //currentNodeId = null;
                     return Data.of( buildNodeOutput( END ) );
                 }
 
@@ -861,15 +898,29 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
 
                 // check on previous node
                 if( shouldInterruptAfter( context.currentNodeId(), context.nextNodeId() )) {
-                    return Data.done( InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build() );
+
+                    var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                                    .put("method", "next()")
+                                    .put("when", "shouldInterruptAfter")
+                                    .build(),
+                            CompiledGraph.this::cloneState)
+                            .apply(context.currentState());
+
+                    return Data.done( InterruptionMetadata.builder(context.currentNodeId(), clonedState).build() );
                 }
 
                 if( shouldInterruptBefore( context.nextNodeId(), context.currentNodeId() ) ) {
-                    return Data.done(InterruptionMetadata.builder(context.currentNodeId(), cloneState(context.currentState())).build() );
+                    var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                                    .put("method", "next()")
+                                    .put("when", "shouldInterruptBefore")
+                                    .build(),
+                            CompiledGraph.this::cloneState)
+                            .apply(context.currentState());
+
+                    return Data.done(InterruptionMetadata.builder(context.currentNodeId(), clonedState).build() );
                 }
 
                 context.setCurrentNodeId( context.nextNodeId() );
-                //currentNodeId = nextNodeId;
 
                 var action = nodes.get( context.currentNodeId());
 
@@ -877,9 +928,17 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                     throw RunnableErrors.missingNode.exception(context.currentNodeId());
 
                 if( action instanceof InterruptableAction<?>) {
+                    var clonedState = shareBaggageToCall( Baggage.current().toBuilder()
+                                    .put("method", "next()")
+                                    .put("when", "InterruptableAction")
+                                    .build(),
+                            CompiledGraph.this::cloneState)
+                            .apply(context.currentState());
+
+
                     @SuppressWarnings("unchecked")
                     final var interruption = (InterruptableAction<State>) action;
-                    final var interruptMetadata = interruption.interrupt(context.currentNodeId(), cloneState(context.currentState()));
+                    final var interruptMetadata = interruption.interrupt(context.currentNodeId(), clonedState);
                     if( interruptMetadata.isPresent() ) {
                         return Data.done( interruptMetadata.get() );
                     }
@@ -888,6 +947,9 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
                 return evaluateAction( action ).get();
             }
             catch( Throwable e ) {
+
+                streamSpan().ifPresent( span -> span.recordException(e) );
+
                 log.error( e.getMessage(), e );
                 return Data.error(e);
             }
