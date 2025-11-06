@@ -2,15 +2,23 @@ package org.bsc.langgraph4j.otel;
 
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.*;
 import io.opentelemetry.api.trace.*;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
+import org.bsc.langgraph4j.GraphArgs;
+import org.bsc.langgraph4j.GraphInput;
+import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
+import org.bsc.langgraph4j.utils.TryFunction;
 
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,6 +29,18 @@ public interface Instrumentable {
     default OpenTelemetry otel() {
         return Optional.ofNullable( io.opentelemetry.api.GlobalOpenTelemetry.get() )
                 .orElseGet(OpenTelemetry::noop);
+    }
+
+    default <T, U, Ex extends Throwable> TryFunction<T, U, Ex> shareBaggageToCall( Baggage baggage, TryFunction<T, U, Ex> function ) throws Ex {
+
+        final var otelContext = requireNonNull( baggage, "baggage cannot be null")
+                .storeInContext( io.opentelemetry.context.Context.current() );
+        return (t) -> {
+            try( Scope ignored = otelContext.makeCurrent() ) {
+                return function.apply(t);
+            }
+        };
+
     }
 
     final class TracerHolder {
@@ -103,6 +123,45 @@ public interface Instrumentable {
                 return this;
             }
 
+            public SB setAllAttributes(Baggage baggage) {
+                if( baggage.isEmpty() ) {
+                    return this;
+                }
+                var attrsBuilder = Attributes.builder();
+
+                baggage.forEach( (key,entry ) ->
+                    attrsBuilder.put( key, entry.getValue()));
+
+                delegate.setAllAttributes(attrsBuilder.build());
+
+                return this;
+            }
+
+            public SB setAllAttributes(RunnableConfig config) {
+
+                var attrsBuilder = Attributes.builder()
+                        .put("config.isRunningStudio", config.isRunningInStudio())
+                        .put("config.threadId", config.threadId().orElse( BaseCheckpointSaver.THREAD_ID_DEFAULT ))
+                        .put("config.streamMode", config.streamMode().name() )
+                        ;
+                config.checkPointId().ifPresent( checkPointId -> attrsBuilder.put("config.checkPointId", checkPointId));
+
+                delegate.setAllAttributes(attrsBuilder.build());
+
+                return this;
+            }
+            public SB setAttribute(GraphInput input) {
+
+                if( input instanceof GraphArgs args) {
+                    delegate.setAttribute( "input.args", args.value().toString() );
+                }
+                else {
+                    delegate.setAttribute( "input.resume", true );
+
+                }
+                return this;
+            }
+
             @Override
             public SB setSpanKind(SpanKind spanKind) {
                 delegate.setSpanKind(spanKind);
@@ -126,7 +185,7 @@ public interface Instrumentable {
                 return delegate.startSpan();
             }
 
-            public <R> R startSpan( TryFunction<R> function ) throws Exception {
+            public <R> R tryStartSpan( TryFunction<R> function ) throws Exception {
                 requireNonNull( function, "function cannot be null");
                 var span = delegate.startSpan();
 
@@ -140,6 +199,21 @@ public interface Instrumentable {
                         span.recordException( e );
                     }
                     throw e;
+                }
+                finally {
+                    span.end();
+                }
+
+            }
+
+            public <R> R startSpan( Function<Span,R> function ) {
+                requireNonNull( function, "function cannot be null");
+                var span = delegate.startSpan();
+
+                try {
+                    var result = function.apply( span );
+                    span.setStatus( StatusCode.OK );
+                    return result;
                 }
                 finally {
                     span.end();
@@ -160,9 +234,8 @@ public interface Instrumentable {
             return owner.otel().getTracer(scope);
         }
 
-        public SB spanBuilder(String spanName ) {
-            return new SB( object().spanBuilder( requireNonNull(spanName, "spanName cannot be null")))
-                            .setSpanKind( SpanKind.INTERNAL );
+        public SB spanBuilder( String spanName ) {
+            return new SB( object().spanBuilder( requireNonNull(spanName, "spanName cannot be null")));
         }
 
     }
