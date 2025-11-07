@@ -83,8 +83,14 @@ public interface StreamingChatGenerator {
                         return response;
                     }
 
-                    final var lastMessageText = requireNonNull(lastResponse.getResult().getOutput().getText(),
-                            "lastResponse text cannot be null" );
+                    final var lastResponseMessage  = lastResponse.getResult().getOutput();
+
+                    final var lastMessageText = requireNonNull(lastResponseMessage.getText(),
+                            "lastResponse message text cannot be null" );
+
+                    final List<AssistantMessage.ToolCall> toolCalls = lastResponse.hasToolCalls() ?
+                            lastResponseMessage.getToolCalls() :
+                            List.of();
 
                     final var currentMessageText = currentMessage.getText();
 
@@ -93,7 +99,7 @@ public interface StreamingChatGenerator {
                                     lastMessageText.concat( currentMessageText ) :
                                     lastMessageText,
                             currentMessage.getMetadata(),
-                            currentMessage.getToolCalls(),
+                            toolCalls,
                             currentMessage.getMedia()
                     );
 
