@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static dev.langchain4j.agent.tool.ToolSpecifications.toolSpecificationFrom;
+import static java.util.Objects.requireNonNull;
 
 public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
     private final Map<ToolSpecification, ToolExecutor> toolMap = new HashMap<>();
@@ -26,6 +27,20 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
         return (T) this;
     }
 
+
+    public final T toolsFromObject(Object objectWithTools, Class<?> objectWithToolsClass ) {
+        requireNonNull(objectWithToolsClass, "objectWithToolsClass cannot be null");
+        requireNonNull(objectWithTools, "objectWithTools cannot be null");
+
+        for (var method : objectWithToolsClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Tool.class)) {
+                final var toolExecutor = new DefaultToolExecutor(objectWithTools, method);
+                toolMap.put( toolSpecificationFrom(method), toolExecutor );
+            }
+        }
+        return result();
+    }
+
     /**
      * Sets the tool specification for the graph builder.
      *
@@ -34,13 +49,8 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
      */
     public final T toolsFromObject(Object objectWithTools) {
 
-        for (var method : objectWithTools.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(Tool.class)) {
-                final var toolExecutor = new DefaultToolExecutor(objectWithTools, method);
-                toolMap.put( toolSpecificationFrom(method), toolExecutor );
-            }
-        }
-        return result();
+        return toolsFromObject( objectWithTools, objectWithTools.getClass());
+
     }
 
     /**
@@ -66,7 +76,7 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
      * @return the updated builder instance
      */
     public final T tool( McpClient mcpClient ) {
-        Objects.requireNonNull(mcpClient, "mcpClient cannot be null");
+        requireNonNull(mcpClient, "mcpClient cannot be null");
 
         for (var toolSpecification : mcpClient.listTools()) {
             tool(toolSpecification, (request, o) -> mcpClient.executeTool(request).resultText());
