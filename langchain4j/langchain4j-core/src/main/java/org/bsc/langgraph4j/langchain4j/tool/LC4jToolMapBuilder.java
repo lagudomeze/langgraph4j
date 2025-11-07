@@ -8,9 +8,12 @@ import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutionResult;
 import dev.langchain4j.service.tool.ToolExecutor;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static dev.langchain4j.agent.tool.ToolSpecifications.toolSpecificationFrom;
 import static java.util.Objects.requireNonNull;
@@ -27,20 +30,6 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
         return (T) this;
     }
 
-
-    public final T toolsFromObject(Object objectWithTools, Class<?> objectWithToolsClass ) {
-        requireNonNull(objectWithToolsClass, "objectWithToolsClass cannot be null");
-        requireNonNull(objectWithTools, "objectWithTools cannot be null");
-
-        for (var method : objectWithToolsClass.getDeclaredMethods()) {
-            if (method.isAnnotationPresent(Tool.class)) {
-                final var toolExecutor = new DefaultToolExecutor(objectWithTools, method);
-                toolMap.put( toolSpecificationFrom(method), toolExecutor );
-            }
-        }
-        return result();
-    }
-
     /**
      * Sets the tool specification for the graph builder.
      *
@@ -49,8 +38,37 @@ public class LC4jToolMapBuilder<T extends LC4jToolMapBuilder<T>> {
      */
     public final T toolsFromObject(Object objectWithTools) {
 
-        return toolsFromObject( objectWithTools, objectWithTools.getClass());
+        Class<?> clazz = requireNonNull(objectWithTools, "class cannot be null").getClass();
 
+        List<Method> toolMethods = List.of();
+        while( clazz != null  && clazz != Object.class ) {
+
+            toolMethods = Stream.of( clazz.getDeclaredMethods() )
+                    .filter( method -> method.isAnnotationPresent(Tool.class))
+                    .toList();
+
+            if( !toolMethods.isEmpty()  ) break;
+
+            if( clazz.isSynthetic() ) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+
+        toolMethods.forEach( method -> {
+            final var toolExecutor = new DefaultToolExecutor(objectWithTools, method);
+            toolMap.put( toolSpecificationFrom(method), toolExecutor );
+        });
+
+        return result();
+
+
+    }
+
+    public final T toolsFromObject(Object ...objectWithTools){
+
+        Stream.of(objectWithTools).forEach(this::toolsFromObject);
+
+        return result();
     }
 
     /**
