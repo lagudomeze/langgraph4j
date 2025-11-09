@@ -5,7 +5,7 @@
         </encoder>
     </appender>
 
-    <appender name="langgraph4j-otel" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+    <appender name="LG4J-OTEL" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
         <!--
         see: https://github.com/open-telemetry/opentelemetry-java-instrumentation/tree/main/instrumentation/logback/logback-appender-1.0/library
         -->
@@ -18,6 +18,6 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
-        <appender-ref ref="langgraph4j-otel" />
+        <appender-ref ref="LG4J-OTEL" />
     </root>
 </configuration>
