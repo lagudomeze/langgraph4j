@@ -10,7 +10,8 @@
     <artifactId>langgraph4j-opentelemetry</artifactId>
     <packaging>jar</packaging>
 
-    <name>langgraph4j-opentelemetry</name>
+    <name>langgraph4j::opentelemetry</name>
+    <description>Open Telemetry Experimentation</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -97,6 +98,14 @@
                     <excludes>
                         <exclude>**/*ITest.java</exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
 
