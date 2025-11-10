@@ -2,6 +2,7 @@ package org.bsc.langgraph4j;
 
 import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.ImplicitContextKeyed;
 import org.bsc.async.AsyncGenerator;
@@ -428,15 +429,8 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
     }
 
     State cloneState( Map<String,Object> data ) throws Exception {
-
-        if( TRACER.streamSpan().isEmpty() ) {
-            return _cloneState(data);
-        }
-
-        var baggage = Baggage.fromContext(Context.current());
-
         return TRACER.spanBuilder("cloneState")
-                .setAllAttributes( baggage )
+                .setAllAttributes( sharedBaggage() )
                 .tryStartSpan( span -> _cloneState(data) );
     }
 
@@ -740,10 +734,8 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
         }
 
         protected Output buildNodeOutput( String nodeId ) throws Exception {
-            var baggage = Baggage.fromContext(io.opentelemetry.context.Context.current());
-
             return TRACER.spanBuilder("buildNodeOutput")
-                    .setAllAttributes( baggage )
+                    .setAllAttributes( sharedBaggage() )
                     .tryStartSpan( span -> {
                         try ( var scope = span.makeCurrent() ) {
                             return _buildNodeOutput(nodeId);
@@ -809,10 +801,9 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
         }
 
         private CompletableFuture<Data<Output>> evaluateAction( AsyncNodeActionWithConfig<State> action ) {
-            var baggage = Baggage.fromContext(io.opentelemetry.context.Context.current());
 
             return TRACER.spanBuilder("evaluateAction")
-                    .setAllAttributes( baggage )
+                    .setAllAttributes( sharedBaggage() )
                     .startSpan( span -> {
                         try ( var scope = span.makeCurrent() ) {
                             return _evaluateAction(action);
@@ -862,6 +853,15 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
         }
 
         private Optional<BaseCheckpointSaver.Tag> releaseThread() throws Exception {
+
+            return TRACER.spanBuilder("releaseThread")
+                    .setAllAttributes( sharedBaggage() )
+                    .setAttribute( "isReleaseThread", compileConfig.releaseThread())
+                    .tryStartSpan( span -> _releaseThread() );
+        }
+
+
+        private Optional<BaseCheckpointSaver.Tag> _releaseThread() throws Exception {
             if(compileConfig.releaseThread() && compileConfig.checkpointSaver().isPresent() ) {
                 return Optional.of(compileConfig.checkpointSaver().get().release( config ));
             }
@@ -901,8 +901,11 @@ public class CompiledGraph<State extends AgentState> implements Instrumentable {
 
                 // GUARD: CHECK MAX ITERATION REACHED
                 if( ++iteration > maxIterations ) {
-                    // log.warn( "Maximum number of iterations ({}) reached!", maxIterations);
-                    return Data.error( new IllegalStateException( format("Maximum number of iterations (%d) reached!", maxIterations)) );
+
+                    final var errorMsg = format("Maximum number of iterations (%d) reached!", maxIterations);
+                    Span.current().setStatus(StatusCode.ERROR, errorMsg );
+                    otelLog.error( errorMsg );
+                    return Data.error( new IllegalStateException( errorMsg ));
                 }
 
                 // GUARD: CHECK IF IT IS END
