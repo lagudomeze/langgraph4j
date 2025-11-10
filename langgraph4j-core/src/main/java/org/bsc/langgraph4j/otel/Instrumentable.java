@@ -41,7 +41,10 @@ public interface Instrumentable {
                 return function.apply(t);
             }
         };
+    }
 
+    default Baggage sharedBaggage() {
+        return Baggage.fromContext(Context.current());
     }
 
     class TracerHolder {
