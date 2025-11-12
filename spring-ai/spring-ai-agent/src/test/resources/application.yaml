@@ -7,9 +7,14 @@ spring:
     name: springai-agentexecutor
   main:
 # console app
-    web-application-type: none
+#    web-application-type: none
 # studio
-#     web-application-type: servlet
+    web-application-type: servlet
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # Sample all traces for dev/testing (0.1 for production)
 
 otel:
   sdk:
