@@ -40,6 +40,10 @@ public class LC4jToolServiceTest {
             return format( "test tool executed: %s with context", message);
         }
 
+    }
+
+    static class TestTool2 {
+
         @Tool("tool for test passing context and return command")
         String execTestWithContextAndReturnCommand(@P("test message") String message, InvocationParameters context ) {
 
@@ -53,7 +57,6 @@ public class LC4jToolServiceTest {
 
     }
 
-
     @Test
     public void invokeToolNode() {
 
@@ -63,7 +66,7 @@ public class LC4jToolServiceTest {
 
         LC4jToolService.Builder builder = LC4jToolService.builder();
 
-        builder.toolsFromObject( new TestTool() );
+        builder.toolsFromObject( new TestTool(), new TestTool2() );
 
         ToolSpecification toolSpecification = ToolSpecification.builder()
                 .name("getPCName")

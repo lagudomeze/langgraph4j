@@ -2,6 +2,59 @@
 
 
 
+<!-- "name: v1.7.3" is a release tag -->
+
+## [v1.7.3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.3) (2025-11-13)
+
+### Features
+
+ *  **core**  add metadataKeys() method to HasMetadata interface ([4ca5eccada1c09f](https://github.com/bsorrentino/langgraph4j/commit/4ca5eccada1c09fb19dec82132104e38ce083d8d))
+   
+
+### Bug Fixes
+
+ -  **spring-ai**  resuse the lastResponse toolCalls in the mergeMessage  consumer . ([27c938263ae7848](https://github.com/bsorrentino/langgraph4j/commit/27c938263ae7848125c8e8c4016465af6cc270f1))
+     > resolve PR #276
+
+ -  **langchain4j**  add a overload for toolsFromObject that accepts both the object and its Class as parameters ([667c6c25be860fb](https://github.com/bsorrentino/langgraph4j/commit/667c6c25be860fbce3c4e55b1c510ebb82db1329))
+     > - This allow to specify real class in the case of CDI injection
+     > resolve #274
+
+
+### Documentation
+
+ -  Adding a more specific code example to illustrate how to create and use parallel node ([92db3f9abde134a](https://github.com/bsorrentino/langgraph4j/commit/92db3f9abde134a810250d00e2713d07a57ba22b))
+
+ -  update changelog ([a312f4fa2340511](https://github.com/bsorrentino/langgraph4j/commit/a312f4fa2340511fa98b5ae273bea58a65c53910))
+
+
+### Refactor
+
+ -  **langchain4j**  bump langchain4j from 1.7.1 to 1.8.0 and  1.7.1-beta14 to 1.8.0-beta15 ([07ef572d3b97aac](https://github.com/bsorrentino/langgraph4j/commit/07ef572d3b97aac2b5c796dd41203e8c50c4ef98))
+   
+ -  **spring-ai**  bump spring-ai from 1.0.3 to version 1.1.0 ([6dc4fa7aee03a15](https://github.com/bsorrentino/langgraph4j/commit/6dc4fa7aee03a1513308ce56a3051d2f965e79a5))
+   
+ -  **langchain4j**  Modified toolsFromObject method to accept either a single object or an array of objects. Added logic to traverse class hierarchies and collect tool methods. ([ac1918915a3d358](https://github.com/bsorrentino/langgraph4j/commit/ac1918915a3d358503fd5dde7ef60119f86c4828))
+    > work on #274
+
+
+### ALM 
+
+ -  bump to release 1.7.3 ([8588b24ca456b23](https://github.com/bsorrentino/langgraph4j/commit/8588b24ca456b238eff2ff5d944fc623e800596a))
+   
+ -  bump to next dev version 1.7-SNAPSHOT ([6849377ae6b3b59](https://github.com/bsorrentino/langgraph4j/commit/6849377ae6b3b593f71eae572a50992d4af02e53))
+   
+
+### Test 
+
+ -  **langchain4j**  test toolsFromObject passing multiple objects ([c530719064822ff](https://github.com/bsorrentino/langgraph4j/commit/c530719064822ff92678223b4b1f395d2b1c49fb))
+    > work on #274
+
+
+
+
+
+
 <!-- "name: v1.7.2" is a release tag -->
 
 ## [v1.7.2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.2) (2025-10-30)
