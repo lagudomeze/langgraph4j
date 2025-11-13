@@ -175,18 +175,19 @@ public abstract class DiagramGenerator {
      */
     protected abstract void commentLine( Context ctx,  boolean yesOrNo );
 
-    /**
-     * Generate a textual representation of the given graph.
-     *
-     * @param nodes       the state graph nodes used to generate the context, which must not be null
-     * @param edges       the state graph edges used to generate the context, which must not be null
-     * @param title The title of the graph.
-     * @param printConditionalEdge Whether to print the conditional edge condition.
-     * @return A string representation of the graph.
-     */
-    public final <State extends AgentState> String generate(StateGraph.Nodes<State> nodes, StateGraph.Edges<State> edges, String title, boolean printConditionalEdge ) {
 
-        return generate( nodes, edges, Context.builder()
+    /**
+     * Creates a {@link GraphDefinition.Reducer} that generates a textual representation of a graph.
+     *
+     * @param <State>              the type of the agent state
+     * @param title                the title of the diagram
+     * @param printConditionalEdge if true, conditional edges will be printed in the diagram
+     * @return a {@link GraphDefinition.Reducer} that produces a string representation of the graph
+     */
+    public final <State extends AgentState> GraphDefinition.Reducer<State,String> generate(String title, boolean printConditionalEdge ) {
+
+        return ( nodes, edges ) ->
+                    generate( nodes, edges, Context.builder()
                                         .title( title )
                                         .isSubGraph( false )
                                         .printConditionalEdge( printConditionalEdge )
