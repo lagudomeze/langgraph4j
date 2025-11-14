@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.spring.ai.generators;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.async.FlowGenerator;
@@ -150,7 +149,7 @@ public interface StreamingChatGenerator {
                 }
             });
 
-            return new ArrayList<>(toolCallMap.values());
+            return toolCallMap.values().stream().toList();
         }
     }
 
