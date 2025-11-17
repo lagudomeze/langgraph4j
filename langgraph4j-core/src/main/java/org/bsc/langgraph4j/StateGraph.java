@@ -18,15 +18,14 @@ import java.util.*;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
-import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 
 /**
  * Represents a state graph with nodes and edges.
  *
  * @param <State> the type of the state associated with the graph
  */
-public class StateGraph<State extends AgentState> {
+public non-sealed class StateGraph<State extends AgentState> implements GraphDefinition<State> {
+
     /**
      * Enum representing various error messages related to graph state.
      */
@@ -65,9 +64,6 @@ public class StateGraph<State extends AgentState> {
             return new GraphStateException(format(errorMessage, (Object[]) args));
         }
     }
-
-    public static String END = "__END__";
-    public static String START = "__START__";
 
     final Nodes<State> nodes = new Nodes<>();
     final Edges<State> edges = new Edges<>();
@@ -221,21 +217,6 @@ public class StateGraph<State extends AgentState> {
      * This implies that Subgraph share the same state with parent graph
      *
      * @param id the identifier of the node representing the subgraph
-     * @param subGraph the compiled subgraph to be added
-     * @return this state graph instance
-     * @throws GraphStateException if the node identifier is invalid or the node already exists
-     * @deprecated use {@code addNode( String, CompiledGraph<State> )} instead
-     */
-    @Deprecated(forRemoval = true)
-    public StateGraph<State> addSubgraph(String id, CompiledGraph<State> subGraph) throws GraphStateException {
-        return addNode(id, subGraph);
-    }
-
-    /**
-     * Adds a subgraph to the state graph by creating a node with the specified identifier.
-     * This implies that Subgraph share the same state with parent graph
-     *
-     * @param id the identifier of the node representing the subgraph
      * @param subGraph the subgraph to be added. it will be compiled on compilation of the parent
      * @return this state graph instance
      * @throws GraphStateException if the node identifier is invalid or the node already exists
@@ -270,6 +251,21 @@ public class StateGraph<State extends AgentState> {
     @Deprecated(forRemoval = true)
     public StateGraph<State> addSubgraph(String id, StateGraph<State> subGraph) throws GraphStateException {
         return addNode( id, subGraph );
+    }
+
+    /**
+     * Adds a subgraph to the state graph by creating a node with the specified identifier.
+     * This implies that Subgraph share the same state with parent graph
+     *
+     * @param id the identifier of the node representing the subgraph
+     * @param subGraph the compiled subgraph to be added
+     * @return this state graph instance
+     * @throws GraphStateException if the node identifier is invalid or the node already exists
+     * @deprecated use {@code addNode( String, CompiledGraph<State> )} instead
+     */
+    @Deprecated(forRemoval = true)
+    public StateGraph<State> addSubgraph(String id, CompiledGraph<State> subGraph) throws GraphStateException {
+        return addNode(id, subGraph);
     }
 
     /**
@@ -389,7 +385,7 @@ public class StateGraph<State extends AgentState> {
      */
     public GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
 
-        String content = type.generator.generate( nodes, edges, title, printConditionalEdges);
+        final String content = reduce( type.generator.generate(title, printConditionalEdges) );
 
         return new GraphRepresentation( type, content );
     }
@@ -402,66 +398,22 @@ public class StateGraph<State extends AgentState> {
      * @return a diagram code of the state graph
      */
     public GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
-
-        String content = type.generator.generate( nodes, edges, title, true);
-
-        return new GraphRepresentation( type, content );
+        return getGraph( type, title, true );
     }
 
-    public static class Nodes<State extends AgentState> {
-        public final Set<Node<State>> elements;
-
-        public Nodes( Collection<Node<State>> elements ) {
-            this.elements = new LinkedHashSet<>(elements);
-        }
-
-        public Nodes( ) {
-            this.elements = new LinkedHashSet<>();
-        }
-
-        public boolean anyMatchById(String id ) {
-            return elements.stream()
-                    .anyMatch( n -> Objects.equals( n.id(), id) );
-        }
-
-        public List<SubStateGraphNode<State>> onlySubStateGraphNodes() {
-            return elements.stream()
-                    .filter(n -> n instanceof SubStateGraphNode<State>)
-                    .map(n -> (SubStateGraphNode<State>) n)
-                    .toList();
-        }
-
-        public List<Node<State>> exceptSubStateGraphNodes() {
-            return elements.stream()
-                    .filter(n ->  !(n instanceof SubStateGraphNode<State>) )
-                    .toList();
-        }
-    }
-
-    public static class Edges<State extends AgentState> {
-
-        public final List<Edge<State>> elements;
-
-        public Edges( Collection<Edge<State>> elements ) {
-            this.elements = new LinkedList<>(elements);
-        }
-
-        public Edges( ) {
-            this.elements = new LinkedList<>();
-        }
-
-        public Optional<Edge<State>> edgeBySourceId(String sourceId ) {
-            return elements.stream()
-                    .filter( e -> Objects.equals( e.sourceId(), sourceId ))
-                    .findFirst();
-        }
-
-        public List<Edge<State>> edgesByTargetId(String targetId ) {
-            return elements.stream()
-                    .filter( e -> e.anyMatchByTargetId(targetId)).toList();
-        }
-
-
+    /**
+     * Applies a reducer function to process the nodes and edges of this graph.
+     *
+     * <p>This method allows external processing of the graph structure by applying a
+     * custom reduction function that receives all nodes and edges.
+     *
+     * @param <Output> the type of output produced by the reducer
+     * @param reducer the reducer function to apply
+     * @return the output produced by the reducer
+     */
+    @Override
+    public <Output> Output reduce( Reducer<State, Output> reducer ) {
+        return reducer.apply( nodes, edges );
     }
 
 }

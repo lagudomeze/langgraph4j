@@ -36,7 +36,7 @@ import static org.bsc.langgraph4j.StateGraph.START;
  *
  * @param <State> the type of the state associated with the graph
  */
-public class CompiledGraph<State extends AgentState> {
+public final class CompiledGraph<State extends AgentState> implements GraphDefinition<State> {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CompiledGraph.class);
 
     private static final String INTERRUPT_AFTER = "__INTERRUPTED__";
@@ -89,7 +89,7 @@ public class CompiledGraph<State extends AgentState> {
      *
      * @param stateGraph the StateGraph to be used in this CompiledGraph
      */
-    protected CompiledGraph(StateGraph<State> stateGraph, CompileConfig compileConfig ) throws GraphStateException {
+    CompiledGraph(StateGraph<State> stateGraph, CompileConfig compileConfig ) throws GraphStateException {
 
         maxIterations = compileConfig.recursionLimit();
 
@@ -506,7 +506,7 @@ public class CompiledGraph<State extends AgentState> {
      */
     public GraphRepresentation getGraph( GraphRepresentation.Type type, String title, boolean printConditionalEdges ) {
 
-        String content = type.generator.generate( processedData.nodes(), processedData.edges(), title, printConditionalEdges);
+        final String content = reduce( type.generator.generate( title, printConditionalEdges) );
 
         return new GraphRepresentation( type, content );
     }
@@ -519,10 +519,7 @@ public class CompiledGraph<State extends AgentState> {
      * @return a diagram code of the state graph
      */
     public GraphRepresentation getGraph( GraphRepresentation.Type type, String title ) {
-
-        String content = type.generator.generate( processedData.nodes(), processedData.edges(), title, true);
-
-        return new GraphRepresentation( type, content );
+        return getGraph( type, title, true );
     }
 
     /**
@@ -533,6 +530,21 @@ public class CompiledGraph<State extends AgentState> {
      */
     public GraphRepresentation getGraph( GraphRepresentation.Type type ) {
         return getGraph(type, "Graph Diagram", true);
+    }
+
+    /**
+     * Applies a reducer function to process the nodes and edges of this graph.
+     *
+     * <p>This method allows external processing of the graph structure by applying a
+     * custom reduction function that receives all nodes and edges.
+     *
+     * @param <Output> the type of output produced by the reducer
+     * @param reducer the reducer function to apply
+     * @return the output produced by the reducer
+     */
+    @Override
+    public <Output> Output reduce(Reducer<State, Output> reducer ) {
+        return reducer.apply( processedData.nodes(), processedData.edges() );
     }
 
     /**

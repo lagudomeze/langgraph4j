@@ -116,7 +116,7 @@ public class StateGraphRepresentationTest {
                        "condition1" .down.> "agent_review": "ERROR"
                        '"evaluate_result" .down.> "agent_review": "ERROR"
                        @enduml
-                        """,
+                       """,
                 result.content());
 
         // System.out.println( result.getContent() );
