@@ -2,6 +2,45 @@
 
 
 
+<!-- "name: v1.7.4" is a release tag -->
+
+## [v1.7.4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.4) (2025-11-17)
+
+### Features
+
+ *  **core**  add reduce() method to StateGraph and CompiledGraph through new sealed interface GraphDefinition ([94f4efdd4a81418](https://github.com/bsorrentino/langgraph4j/commit/94f4efdd4a81418262ed88059d774241ee60064c))
+     > - refactor getGraph() using new reduce() method
+     > resolve #278
+   
+
+### Bug Fixes
+
+ -  **spring-ai**  preserve toolCalls when merging streaming ChatResponse objects ([f9694319e569cf1](https://github.com/bsorrentino/langgraph4j/commit/f9694319e569cf1224c379ef6e4c820bd19c4558))
+
+
+### Documentation
+
+ -  update changelog ([a78ef4570b1e7c8](https://github.com/bsorrentino/langgraph4j/commit/a78ef4570b1e7c84f364f452cb677ef5be574ac2))
+
+
+### Refactor
+
+ -  **spring-ai-core**  return an unmodifiable list from mergeToolCalls() in StreamingChatGenerator ([3677c335acfd22d](https://github.com/bsorrentino/langgraph4j/commit/3677c335acfd22db65c6a457cae3138c1e7c74d3))
+    > work on #281
+
+
+### ALM 
+
+ -  bump to release 1.7.4 ([2edb8584c0ae97e](https://github.com/bsorrentino/langgraph4j/commit/2edb8584c0ae97e19155060bf768bbf80f3fd3b7))
+   
+ -  bump to next dev version 1.7-SNAPSHOT ([ea916d307fbc39b](https://github.com/bsorrentino/langgraph4j/commit/ea916d307fbc39ba9bf160f203ae11099b2a87f9))
+   
+
+
+
+
+
+
 <!-- "name: v1.7.3" is a release tag -->
 
 ## [v1.7.3](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.3) (2025-11-13)
