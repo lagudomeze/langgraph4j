@@ -8,6 +8,7 @@ import org.bsc.langgraph4j.utils.Types;
 
 import java.io.*;
 import java.lang.reflect.ParameterizedType;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -17,9 +18,19 @@ public abstract class PlainTextStateSerializer<State extends AgentState> extends
         super(stateFactory);
     }
 
+    public abstract String writeDataAsString(Map<String, Object> data) throws IOException;
+    public abstract Map<String, Object> readDataFromString(String string) throws IOException;
+
     @Override
-    public String contentType() {
-        return "plain/text";
+    public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
+        String text = writeDataAsString(data);
+        Serializer.writeUTF( text, out );
+    }
+
+    @Override
+    public final Map<String, Object> readData(ObjectInput in) throws IOException {
+        String text = Serializer.readUTF(in);
+        return readDataFromString(text);
     }
 
 
