@@ -3,14 +3,11 @@ package org.bsc.langgraph4j.serializer.plain_text.gson;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
 /**
@@ -39,16 +36,13 @@ public abstract class GsonStateSerializer<State extends AgentState> extends Plai
     }
 
     @Override
-    public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
-        String json = gson.toJson(data);
-        Serializer.writeUTF(json, out);
+    public final String writeDataAsString(Map<String, Object> data) throws IOException {
+        return gson.toJson(data);
     }
 
     @Override
-    public final Map<String, Object> readData(ObjectInput in) throws IOException, ClassNotFoundException {
-        String json = Serializer.readUTF(in);
-        var typeToken = new TypeToken<Map<String, Object>>() {};
-        return gson.fromJson(json, typeToken);
+    public final Map<String, Object> readDataFromString(String string) throws IOException {
+        return gson.fromJson(string, new TypeToken<>() {});
     }
 
 }

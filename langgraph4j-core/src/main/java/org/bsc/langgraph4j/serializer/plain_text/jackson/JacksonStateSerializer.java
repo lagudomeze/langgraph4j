@@ -5,14 +5,11 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.bsc.langgraph4j.serializer.Serializer;
 import org.bsc.langgraph4j.serializer.plain_text.PlainTextStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.AgentStateFactory;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -59,15 +56,13 @@ public abstract class JacksonStateSerializer <State extends AgentState> extends 
     }
 
     @Override
-    public final void writeData(Map<String, Object> data, ObjectOutput out) throws IOException {
-        String json = objectMapper.writeValueAsString(data);
-        Serializer.writeUTF( json, out );
+    public final String writeDataAsString(Map<String, Object> data) throws IOException {
+        return objectMapper.writeValueAsString(data);
     }
 
     @Override
-    public final Map<String, Object> readData(ObjectInput in) throws IOException, ClassNotFoundException {
-        String json = Serializer.readUTF(in);
-        return objectMapper.readValue(json, new TypeReference<Map<String,Object>>() {});
+    public final Map<String, Object> readDataFromString(String string) throws IOException {
+        return objectMapper.readValue(string, new TypeReference<>() {});
     }
 
 }
