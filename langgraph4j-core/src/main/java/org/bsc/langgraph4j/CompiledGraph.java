@@ -1,11 +1,9 @@
 package org.bsc.langgraph4j;
 
 import io.opentelemetry.api.baggage.Baggage;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.context.Context;
-import io.opentelemetry.context.ImplicitContextKeyed;
 import io.opentelemetry.context.Scope;
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.*;
@@ -19,6 +17,7 @@ import org.bsc.langgraph4j.otel.Instrumentable;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.utils.TryFunction;
+import org.bsc.langgraph4j.utils.TrySupplier;
 import org.bsc.langgraph4j.utils.TypeRef;
 
 import java.util.*;
@@ -29,6 +28,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.opentelemetry.api.common.AttributeKey.booleanKey;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
@@ -443,9 +443,20 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     }
 
     State cloneState( Map<String,Object> data ) throws Exception {
-        return TRACER.spanBuilder("cloneState")
-                .setAllAttributes( sharedBaggage() )
-                .tryStartSpan( span -> _cloneState(data) );
+
+        if( TRACER.currentSpan().isPresent() ) {
+            final var span = TRACER.currentSpan().get();
+
+            span.addEvent("start cloning state", Instrumentable.attrsOf(stateGraph.getStateSerializer(), data));
+
+            var result = _cloneState(data);
+
+            span.addEvent("state cloned");
+
+            return result;
+        }
+
+        return _cloneState(data);
     }
 
     private State _cloneState( Map<String,Object> data ) throws Exception {
@@ -766,18 +777,8 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
         }
 
-        protected Output buildNodeOutput( String nodeId ) throws Exception {
-            return TRACER.spanBuilder("buildNodeOutput")
-                    .setAllAttributes( sharedBaggage() )
-                    .tryStartSpan( span -> {
-                        try ( var scope = span.makeCurrent() ) {
-                            return _buildNodeOutput(nodeId);
-                        }
-                    } );
-        }
-
         @SuppressWarnings("unchecked")
-        private Output _buildNodeOutput(String nodeId ) throws Exception {
+        private Output buildNodeOutput(String nodeId ) throws Exception {
             var clonedState = cloneState( context.currentState() );
 
             return  (Output)NodeOutput.of( nodeId, clonedState );
@@ -836,7 +837,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         private CompletableFuture<Data<Output>> evaluateAction( AsyncNodeActionWithConfig<State> action ) {
 
             return TRACER.spanBuilder("evaluateAction")
-                    .setAllAttributes( sharedBaggage() )
+                    .setAllAttributes( Instrumentable.attrsOf( Instrumentable.sharedBaggage()) )
                     .startSpan( span -> {
                         try ( var scope = span.makeCurrent() ) {
                             return _evaluateAction(action);
@@ -886,15 +887,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
         }
 
         private Optional<BaseCheckpointSaver.Tag> releaseThread() throws Exception {
-
-            return TRACER.spanBuilder("releaseThread")
-                    .setAllAttributes( sharedBaggage() )
-                    .setAttribute( "isReleaseThread", compileConfig.releaseThread())
-                    .tryStartSpan( span -> _releaseThread() );
-        }
-
-
-        private Optional<BaseCheckpointSaver.Tag> _releaseThread() throws Exception {
             if(compileConfig.releaseThread() && compileConfig.checkpointSaver().isPresent() ) {
                 return Optional.of(compileConfig.checkpointSaver().get().release( config ));
             }
@@ -936,26 +928,43 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 if( ++iteration > maxIterations ) {
 
                     final var errorMsg = format("Maximum number of iterations (%d) reached!", maxIterations);
-                    Span.current().setStatus(StatusCode.ERROR, errorMsg );
+                    TRACER.currentSpan().ifPresent( span -> span.setStatus(StatusCode.ERROR, errorMsg ));
                     otelLog.error( errorMsg );
                     return Data.error( new IllegalStateException( errorMsg ));
                 }
 
                 // GUARD: CHECK IF IT IS END
                 if( context.nextNodeId() == null && context.currentNodeId() == null  ) {
-                    return releaseThread()
+                    TrySupplier<Data<Output>,Exception> releaseThreadTask = () ->
+                            releaseThread()
                             .map(Data::<Output>done)
                             .orElseGet( () -> Data.done(context.currentState()) );
+
+                    return TRACER.currentSpan().map( TryFunction.Try(  span ->  {
+                        span.addEvent("start releasing Thread",
+                                Attributes.of(booleanKey("lg4j.isReleaseThread"), compileConfig.releaseThread()));
+                        var result = releaseThreadTask.tryGet();
+                        span.addEvent("release Thread");
+                        span.setStatus( StatusCode.OK, "iteration ended");
+                        return result;
+                    }))
+                    .orElseGet( releaseThreadTask );
                 }
 
                 final var returnFromEmbed = context.getReturnFromEmbedAndReset();
 
                 // IS IT A RESUME FROM EMBED ?
                 if( returnFromEmbed.isPresent() ) {
+                    TRACER.currentSpan().ifPresent( span ->
+                        span.addEvent("return from embed" ));
 
                     var interruption = returnFromEmbed.get().value(new TypeRef<InterruptionMetadata<State>>(){} );
 
                     if( interruption.isPresent() ) {
+                        TRACER.currentSpan().ifPresent( span ->  {
+                            span.addEvent("iteration interrupted" ,
+                                    Instrumentable.attrsOf( stateGraph.getStateSerializer(),interruption.get()) );
+                        });
                         return Data.done( interruption.get() );
                     }
 
@@ -964,7 +973,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 if( START.equals(context.currentNodeId()) ) {
                     var nextNodeCommand = getEntryPoint(context.currentState(), config) ;
-                    //nextNodeId = nextNodeCommand.gotoNode();
                     context.setNextNodeId(nextNodeCommand.gotoNode());
                     context.setCurrentState( nextNodeCommand.update() );
 
