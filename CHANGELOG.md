@@ -2,6 +2,49 @@
 
 
 
+<!-- "name: v1.7.5" is a release tag -->
+
+## [v1.7.5](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.5) (2025-11-27)
+
+### Features
+
+ *  **core**  Add abstract methods to the PlainTextStateSerializer class, writeDataAsString() and readDataFromString() to handle the representation of the state as text. ([464dbb75d90241a](https://github.com/bsorrentino/langgraph4j/commit/464dbb75d90241a4b77208fc5176c53d83dc0f0e))
+   
+ *  **core**  Add abstract methods to the PlainTextStateSerializer class, writeDataAsString() and readDataFromString() to handle the representation of the state as text. ([85d9a7f40da65b1](https://github.com/bsorrentino/langgraph4j/commit/85d9a7f40da65b181959a90b82366acd32d274c0))
+   
+
+### Bug Fixes
+
+ -  StreamingChatGenerator chunk ([1ddad6d51413fcc](https://github.com/bsorrentino/langgraph4j/commit/1ddad6d51413fcc4073e4897886f73dd3cb69558))
+
+
+### Documentation
+
+ -  update changelog ([571d780828da74e](https://github.com/bsorrentino/langgraph4j/commit/571d780828da74eaa886509b4c9943b6fb1f4f32))
+
+
+### Refactor
+
+ -  **spring-ai**  improve  StreamingChatGenerator implementation ([ad7fe20038d71cd](https://github.com/bsorrentino/langgraph4j/commit/ad7fe20038d71cd738c369b832552a0d8822580b))
+   
+
+### ALM 
+
+ -  build: bump to release 1.7.5 ([2a16d8ab10cb354](https://github.com/bsorrentino/langgraph4j/commit/2a16d8ab10cb35484324103ce3d7a073062294b1))
+   
+ -  bump to next dev version 1.7-SNAPSHOT ([85cd7ff22e3e982](https://github.com/bsorrentino/langgraph4j/commit/85cd7ff22e3e982163d63e34c18a4434b568b98a))
+   
+
+### Test 
+
+ -  **spring-ai**  verify issue StreamingChatGenerator#build ([7f57816a4c8d382](https://github.com/bsorrentino/langgraph4j/commit/7f57816a4c8d382c448fba67e0d93bd7c4b76337))
+    > work on #284
+
+
+
+
+
+
 <!-- "name: v1.7.4" is a release tag -->
 
 ## [v1.7.4](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.4) (2025-11-17)
