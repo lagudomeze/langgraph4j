@@ -17,7 +17,7 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Nov 17, 2025 | `1.7.4` | official release
+| Nov 27, 2025 | `1.7.5` | official release
 
 ----
 
@@ -103,7 +103,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.7.4</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.7.5</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
