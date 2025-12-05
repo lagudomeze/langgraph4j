@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.bsc.langgraph4j</groupId>
+        <artifactId>langgraph4j-parent</artifactId>
+        <version>1.7-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>langgraph4j-javelit</artifactId>
+
+    <name>langgraph4j::javelit</name>
+    <description>Langgraph4j Javelit Integration</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>io.javelit</groupId>
+            <artifactId>javelit</artifactId>
+            <version>0.75.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bsc.langgraph4j</groupId>
+            <artifactId>langgraph4j-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sourceforge.plantuml</groupId>
+            <artifactId>plantuml-mit</artifactId>
+            <version>1.2025.10</version>
+        </dependency>
+
+        
+    </dependencies>
+
+    <build>
+        <plugins>
+        </plugins>
+    </build>
+</project>
