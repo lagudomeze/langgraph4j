@@ -32,7 +32,7 @@ public class JtSpinnerTestApp {
             Instant start = Instant.now();
             System.out.println( Jt.componentsState().getBoolean("spinner"));
 
-            Thread.sleep(3000 );
+            Thread.sleep(1000 * 10 );
             Duration duration = Duration.between(start, Instant.now());
 
             Jt.info("**Completed in** %ds".formatted(duration.toSeconds())).use(sc);
