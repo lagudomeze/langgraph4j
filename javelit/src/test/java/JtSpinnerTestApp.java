@@ -5,7 +5,6 @@ import org.bsc.javelit.JtSpinner;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.TemporalUnit;
 
 public class JtSpinnerTestApp {
 
@@ -20,19 +19,26 @@ public class JtSpinnerTestApp {
     public void view() {
         Jt.title("JtSpinner test App").use();
 
+        var overlay = Jt.toggle("owerlay").value(false).use();
+
         var sc = Jt.empty().key("spinner-container").use();
 
-        JtSpinner.builder()
+        var spinnerBuilder = JtSpinner.builder()
+                .key("spinner")
                 .message("**this is the spinner test**")
                 .loading(true)
-                .showTime(true)
-                .use(sc);
+                .showTime(true);
+        if(overlay) {
+            spinnerBuilder.overlay(true).use(sc);
+        }
+        else {
+            spinnerBuilder.use(sc);
+        }
 
         try {
             Instant start = Instant.now();
-            System.out.println( Jt.componentsState().getBoolean("spinner"));
 
-            Thread.sleep(1000 * 10 );
+            Thread.sleep(1000 * 5 );
             Duration duration = Duration.between(start, Instant.now());
 
             Jt.info("**Completed in** %ds".formatted(duration.toSeconds())).use(sc);

@@ -11,7 +11,7 @@ import org.intellij.lang.annotations.Language;
 
 import java.io.StringWriter;
 
-public class JtSpinner extends JtComponent<Boolean> {
+public class JtSpinner extends JtComponent<JtComponent.NONE> {
 
     private static final Mustache registerTemplate;
     private static final Mustache renderTemplate;
@@ -28,30 +28,46 @@ public class JtSpinner extends JtComponent<Boolean> {
     final boolean showTime;
     final boolean overlay;
 
-    public static class Builder extends JtComponentBuilder<Boolean, JtSpinner, Builder> {
+    /**
+     * Builder for the spinner component.
+     */
+    public static class Builder extends JtComponentBuilder<NONE, JtSpinner, Builder> {
         private @Language("markdown") String message;
         private Boolean loading = false;
         private Boolean showTime = false;
         private Boolean overlay = false;
 
         /**
-         * The error message content to display. Markdown is supported, see {@link io.javelit.core.Jt#markdown(String)} for more details.
+         * The message content to display.
+         * Markdown is supported.
          */
         public Builder message(final @Language("markdown") @Nonnull String message) {
             this.message = message;
             return this;
         }
 
+        /**
+         * Whether the spinner is loading.
+         * @param loading if true the spinner start.
+         */
         public Builder loading( boolean loading) {
             this.loading = loading;
             return this;
         }
 
+        /**
+         * Whether to show the time.
+         * @param showTime true to show the time.
+         */
         public Builder showTime( boolean showTime) {
             this.showTime = showTime;
             return this;
         }
 
+        /**
+         * Whether to show the overlay.
+         * @param overlay true to show component as an overlay.
+         */
         public Builder overlay( boolean overlay) {
             this.overlay = overlay;
             return this;
@@ -68,9 +84,7 @@ public class JtSpinner extends JtComponent<Boolean> {
     }
 
     private JtSpinner( Builder builder ) {
-        super(builder, builder.loading, ( value )-> {
-            System.out.printf( "CALLBACK %s%n", value );
-        });
+        super(builder, NONE.NONE_VALUE, null);
         this.loading = builder.loading;
         this.message = markdownToHtml(builder.message, true);
         this.showTime = builder.showTime;
@@ -93,7 +107,7 @@ public class JtSpinner extends JtComponent<Boolean> {
     }
 
     @Override
-    protected TypeReference<Boolean> getTypeReference() {
+    protected TypeReference<NONE> getTypeReference() {
         return new TypeReference<>() {
         };
     }
