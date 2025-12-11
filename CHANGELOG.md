@@ -2,18 +2,94 @@
 
 
 
-<!-- "name: Unreleased" is a release tag -->
+<!-- "name: v1.7.6" is a release tag -->
 
-## [Unreleased](https://github.com/bsorrentino/langgraph4j/releases/tag/Unreleased) ()
+## [v1.7.6](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.6) (2025-12-11)
 
+### Features
+
+ *  **javelit**  add JtSpinner component ([14d0b704cd11767](https://github.com/bsorrentino/langgraph4j/commit/14d0b704cd1176793abf8e9ffe734980cd903e48))
+     > work on #287
+   
+ *  **langchain4j-agent**  add test using javelit ([26480f20f41b6ec](https://github.com/bsorrentino/langgraph4j/commit/26480f20f41b6ecbee8f5223c05b80330bfa4fee))
+     > work on [#287](https://github.com/langgraph4j/langgraph4j/issues/287)
+   
+ *  add new javelit module ([00592ad45d1ebe3](https://github.com/bsorrentino/langgraph4j/commit/00592ad45d1ebe3f6df8db55e49dd3afc4eaf9b3))
+     > work on [#287](https://github.com/langgraph4j/langgraph4j/issues/287)
+   
+ *  add new javelit module ([ca526966682aaf1](https://github.com/bsorrentino/langgraph4j/commit/ca526966682aaf1426a6ecab59e7e9aba9f020c3))
+     > work on #287
+   
+ *  **spring-ai**  add test using javelit ([d74ce829d871d6a](https://github.com/bsorrentino/langgraph4j/commit/d74ce829d871d6acf9cbba064ee9f2c66517602d))
+     > work on #287
+   
+
+### Bug Fixes
+
+ -  **spring-ai-core**  add LogProbe serialization for Gemini model ([47cf032dc82f7f1](https://github.com/bsorrentino/langgraph4j/commit/47cf032dc82f7f1d3bd96d5c7bb5c1e2e145cc58))
+
+ -  allow javelit involved only if the current jdk is >=21 ([b8f7bd1286e59cb](https://github.com/bsorrentino/langgraph4j/commit/b8f7bd1286e59cb464267cc586ef31e1529a769e))
+     > work on #287
 
 
 ### Documentation
 
+ -  update changelog ([4a2660af53baa19](https://github.com/bsorrentino/langgraph4j/commit/4a2660af53baa199b7d2700e4920bf81467bb018))
+
+ -  bump to release 1.7.6 ([16a5203e4ed58b8](https://github.com/bsorrentino/langgraph4j/commit/16a5203e4ed58b8f449e86d955caffd406b2b873))
+
+ -  update readme ([fa6ea5c084cfd78](https://github.com/bsorrentino/langgraph4j/commit/fa6ea5c084cfd78b45c5a4abb6a9ddb3e10ce59f))
+     > - adding javelit module
+     > work on #287
+
  -  update changelog ([a4b17caaeae95f1](https://github.com/bsorrentino/langgraph4j/commit/a4b17caaeae95f1424c9d85a786142ce153aa914))
 
 
+### Refactor
 
+ -  **javelit**  refine Javelit implementation ([7fe45a3f0d726c4](https://github.com/bsorrentino/langgraph4j/commit/7fe45a3f0d726c4b726f3a8239f098e775270df1))
+    > work on #287
+
+ -  **spring-ai-agent**  Refactor to include spinner for progress tracking ([b62a417d7421e53](https://github.com/bsorrentino/langgraph4j/commit/b62a417d7421e53e29c284ff31d96f2dfb96ceb4))
+    > work on #287
+
+ -  **langchain4j-agent**  Refactor to include spinner for progress tracking ([b6faddc6e46bbe5](https://github.com/bsorrentino/langgraph4j/commit/b6faddc6e46bbe5f90ed7d3b7f3e1001b8abd4a8))
+    > work on #287
+
+ -  **javelit**  adjusted onStart/onComplete assignments to remove requireNonNull calls. ([47bc66b48722578](https://github.com/bsorrentino/langgraph4j/commit/47bc66b4872257806d40a262ef56bad180264dc3))
+    > work on #287
+
+ -  **javelit**  refine Spinner implementation ([743eec1b363f33a](https://github.com/bsorrentino/langgraph4j/commit/743eec1b363f33affcc85e6972bd4c72f522b4ce))
+    > - rename JtSpinner in SpinnerComponent
+ > - remove need of Jt.empty() container
+ > - add onStart &amp; onComplete functions
+ > work on [#287](https://github.com/langgraph4j/langgraph4j/issues/287)
+
+ -  **javelit**  refine JtSpinner implementation ([b86bd8cc15d4f53](https://github.com/bsorrentino/langgraph4j/commit/b86bd8cc15d4f53af0036a911d0f4ea2b32af9c6))
+    > work on #287
+
+ -  update how-tos notebooks ([13942c126567d49](https://github.com/bsorrentino/langgraph4j/commit/13942c126567d49f988feaa868f09ac8b94b6c08))
+   
+ -  **javelit**  update JtSpinner css styles ([baaa763692ff7ba](https://github.com/bsorrentino/langgraph4j/commit/baaa763692ff7ba8f693be3641bf0af93306ff25))
+    > work on #287
+
+ -  improve javelite implementation ([3ccb42fac0a5854](https://github.com/bsorrentino/langgraph4j/commit/3ccb42fac0a585486365db78c89b7c4932b3034c))
+    > work on #287
+
+
+### ALM 
+
+ -  bump to release 1.7.6 ([5f80e39ab2891ab](https://github.com/bsorrentino/langgraph4j/commit/5f80e39ab2891abb3378cdbe1510548a27ed1fcb))
+   
+ -  **javelit**  Upgrade Java version to 21 ([2c9852e28063b59](https://github.com/bsorrentino/langgraph4j/commit/2c9852e28063b59d9342956b05db01bc66ef407f))
+    > Updated maven.compiler.source and target to Java 21
+ > work on #287
+
+ -  Update langchain4j and beta versions ([b476ab4ebbac0ba](https://github.com/bsorrentino/langgraph4j/commit/b476ab4ebbac0ba55a7c583d5f5d56f6839622be))
+    > Upgrade langchain4j.version to 1.9.1 and beta to 1.9.1-beta17
+
+ -  bump to next dev version 1.7-SNAPSHOT ([d34fc2a0f273d89](https://github.com/bsorrentino/langgraph4j/commit/d34fc2a0f273d893c514ce8eee91aa2ea774b32a))
+   
 
 
 
