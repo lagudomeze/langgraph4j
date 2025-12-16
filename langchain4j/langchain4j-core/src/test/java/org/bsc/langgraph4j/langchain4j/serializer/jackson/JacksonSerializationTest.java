@@ -4,6 +4,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.image.Image;
 import dev.langchain4j.data.message.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -191,6 +192,35 @@ public class JacksonSerializationTest {
             return failedFuture(new IOException("error loading image %s: %s".formatted(imagePath, ex.getMessage())));
         }
     }
+
+    @Test
+    public void ImageContentSerializerTest() throws Exception {
+
+        final var imageContent = loadImageContentResource("/ReAct_image.png", "image/png").get();
+
+        var serializer = new LC4jJacksonStateSerializer<>(AgentState::new);
+
+        var stateData = Map.<String,Object>of("image", imageContent );
+
+        var jsonString = serializer.writeDataAsString( stateData );
+
+        assertNotNull( jsonString );
+
+        var newStateData = serializer.readDataFromString( jsonString );
+
+        assertNotNull( newStateData );
+        assertFalse( newStateData.isEmpty() );
+        assertInstanceOf( ImageContent.class, newStateData.get("image"));
+
+        var newImageContent = (ImageContent)newStateData.get("image");
+
+        assertEquals( imageContent.image().url(), newImageContent.image().url() );
+        assertEquals( imageContent.image().mimeType(), newImageContent.image().mimeType() );
+        assertEquals( imageContent.image().base64Data(), newImageContent.image().base64Data() );
+        assertEquals( imageContent.detailLevel(), newImageContent.detailLevel() );
+
+    }
+
 
     @Test
     public void UserMessageSingleTextSerializerTest() throws Exception {
