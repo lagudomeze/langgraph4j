@@ -80,7 +80,7 @@ public class MysqlSaver extends MemorySaver {
                node_id VARCHAR(255),
                next_node_id VARCHAR(255),
                state_data JSON NOT NULL,
-               saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+               saved_at TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
 
                CONSTRAINT LANGRAPH4J_FK_THREAD
                    FOREIGN KEY(thread_id)
