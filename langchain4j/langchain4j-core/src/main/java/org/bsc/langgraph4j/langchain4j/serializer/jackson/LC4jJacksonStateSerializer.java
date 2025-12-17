@@ -11,10 +11,10 @@ import org.bsc.langgraph4j.state.AgentStateFactory;
 public class LC4jJacksonStateSerializer <State extends AgentState>  extends JacksonStateSerializer<State> {
 
     interface ChatMessageDeserializer {
-        SystemMessageDeserializer system = new SystemMessageDeserializer();
-        UserMessageDeserializer user = new UserMessageDeserializer();
-        AiMessageDeserializer ai = new AiMessageDeserializer();
-        ToolExecutionResultMessageDeserializer tool = new ToolExecutionResultMessageDeserializer();
+        SystemMessageHandler.Deserializer system = new SystemMessageHandler.Deserializer();
+        UserMessageHandler.Deserializer user = new UserMessageHandler.Deserializer();
+        AiMessageHandler.Deserializer ai = new AiMessageHandler.Deserializer();
+        ToolExecutionResultMessageHandler.Deserializer tool = new ToolExecutionResultMessageHandler.Deserializer();
 
         static void registerTo( SimpleModule module ) {
             module
@@ -28,10 +28,10 @@ public class LC4jJacksonStateSerializer <State extends AgentState>  extends Jack
     }
 
     interface ChatMessageSerializer  {
-        SystemMessageSerializer system = new SystemMessageSerializer();
-        UserMessageSerializer user = new UserMessageSerializer();
-        AiMessageSerializer ai = new AiMessageSerializer();
-        ToolExecutionResultMessageSerializer tool = new ToolExecutionResultMessageSerializer();
+        SystemMessageHandler.Serializer system = new SystemMessageHandler.Serializer();
+        UserMessageHandler.Serializer user = new UserMessageHandler.Serializer();
+        AiMessageHandler.Serializer ai = new AiMessageHandler.Serializer();
+        ToolExecutionResultMessageHandler.Serializer tool = new ToolExecutionResultMessageHandler.Serializer();
 
         static void registerTo( SimpleModule module ) {
             module
@@ -61,11 +61,11 @@ public class LC4jJacksonStateSerializer <State extends AgentState>  extends Jack
                 .register(new TypeMapper.Reference<Content>(ContentType.IMAGE.name()) {} )
         ;
 
-        module.addDeserializer( ToolExecutionRequest.class, new ToolExecutionRequestDeserializer() );
-        module.addSerializer( ToolExecutionRequest.class, new ToolExecutionRequestSerializer() );
+        module.addDeserializer( ToolExecutionRequest.class, new ToolExecutionRequestHandler.Deserializer() );
+        module.addSerializer( ToolExecutionRequest.class, new ToolExecutionRequestHandler.Serializer() );
 
-        module.addSerializer( Content.class, new ContentSerializer() );
-        module.addDeserializer( Content.class, new ContentDeserializer() );
+        module.addSerializer( Content.class, new ContentHandler.Serializer() );
+        module.addDeserializer( Content.class, new ContentHandler.Deserializer() );
 
         objectMapper.registerModule( module );
         //objectMapper.setDefaultSetterInfo(JsonSetter.Value.forContentNulls(Nulls.SKIP));
