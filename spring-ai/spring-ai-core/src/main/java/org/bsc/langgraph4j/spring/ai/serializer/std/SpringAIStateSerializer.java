@@ -6,6 +6,7 @@ import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.content.Media;
 
 /**
  * This class is responsible for serializing and deserializing the state of an agent executor.
@@ -22,7 +23,7 @@ public class SpringAIStateSerializer<State extends AgentState> extends ObjectStr
         mapper().register(Message.class, new MessageSerializer());
         mapper().register(AssistantMessage.ToolCall.class, new ToolCallSerializer());
         mapper().register(ToolResponseMessage.ToolResponse.class, new ToolResponseSerializer());
-
+        mapper().register( Media.class, new MediaSerializer() );
     }
 
 
