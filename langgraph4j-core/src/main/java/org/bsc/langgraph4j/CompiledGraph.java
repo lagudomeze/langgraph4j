@@ -877,7 +877,15 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     }
                 }
 
-                return evaluateAction( action ).get();
+                try {
+                    return evaluateAction(action).get();
+                }
+                catch( InterruptedException ex ) {
+                    if( action instanceof ParallelNode.AsyncParallelNodeAction<?> parallelNodeAction ) {
+                        log.info( "PARALLEL NODE {} INTERRUPTED!", context.currentNodeId() );
+                    }
+                    throw ex;
+                }
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
