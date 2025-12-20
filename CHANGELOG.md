@@ -2,6 +2,56 @@
 
 
 
+<!-- "name: v1.7.8" is a release tag -->
+
+## [v1.7.8](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.8) (2025-12-20)
+
+### Features
+
+ *  **core**  Add exception handling utilities ([d88704dccb9e0ed](https://github.com/bsorrentino/langgraph4j/commit/d88704dccb9e0ed5bec513b7e79e48f08f77ffd8))
+     > Introduce utility methods for extracting root causes and filtering exceptions by type
+   
+ *  **core/ParallelNode**  Refactor CompletableFuture handling to fail fast on exceptions ([93b664e5e204646](https://github.com/bsorrentino/langgraph4j/commit/93b664e5e204646cf0ac6e825923c48dc4fa6c07))
+     > - Replace CompletableFuture.allOf with custom allOfFailFast method that terminates execution on first failure
+     > - add unit tests
+     > resolve #294
+   
+
+
+### Documentation
+
+ -  bump to release 1.7.8 ([da24bd1b778c3d7](https://github.com/bsorrentino/langgraph4j/commit/da24bd1b778c3d7ea32e73cfe3b4db8aa366f2e2))
+
+ -  update changelog ([943487a99f749ce](https://github.com/bsorrentino/langgraph4j/commit/943487a99f749ceeffa5df224fd18e5c16bc3469))
+
+
+### Refactor
+
+ -  **spring-ai-agent**  replaced Map.of with GraphInput.args for input handling. ([7ae7682a450b13d](https://github.com/bsorrentino/langgraph4j/commit/7ae7682a450b13de132491fcb01c95288c2af727))
+   
+ -  **core/CompiledGraph**  detect if a parallel node has receiver an interrupt exception ([e83fec79ebcc121](https://github.com/bsorrentino/langgraph4j/commit/e83fec79ebcc12151170f18d05d0ae8561997bb1))
+    > - this will be useful to manage thread pool shutdown automatically (nice-to-have)
+
+ -  **core/ParallelNode**  Refactor method organization and style improvements ([111f2f355e81f61](https://github.com/bsorrentino/langgraph4j/commit/111f2f355e81f616e99b08590f5abf81e034d955))
+   
+
+### ALM 
+
+ -  bump to release 1.7.8 ([e3ab888dbbe8f79](https://github.com/bsorrentino/langgraph4j/commit/e3ab888dbbe8f792cac82ac21caf7fe21327921b))
+   
+ -  bump to release 1.7.8 ([1501bbc314bcb5f](https://github.com/bsorrentino/langgraph4j/commit/1501bbc314bcb5fca3ac71988de75b500b910722))
+   
+
+### Test 
+
+ -  add new graph cancellation scenarios ([e43ea474e112108](https://github.com/bsorrentino/langgraph4j/commit/e43ea474e11210869735cfcd2e031aa949d0d9a3))
+    > - add parallel nodes cacellation test
+
+
+
+
+
+
 <!-- "name: v1.7.7" is a release tag -->
 
 ## [v1.7.7](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.7) (2025-12-17)
