@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.*;
+import org.bsc.langgraph4j.hook.TrackGraphNodeHook;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.edge.EdgeCondition;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
@@ -146,7 +147,12 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         if (Objects.equals(id, END)) {
             throw Errors.invalidNodeIdentifier.exception(END);
         }
-        Node<State> node = new Node<>(id, (config ) -> action );
+
+        var node = new Node<>(id, (config ) -> {
+            var result = new ManagedAsyncNodeActionWithConfig<>(action);
+            result.hooks.registerWrapCall( new TrackGraphNodeHook<>(id) );
+            return result;
+        });
 
         if (nodes.elements.contains(node)) {
             throw Errors.duplicateNodeError.exception(id);
