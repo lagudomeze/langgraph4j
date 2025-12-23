@@ -1,8 +1,6 @@
-package org.bsc.langgraph4j;
+package org.bsc.langgraph4j.serializer.std;
 
 import org.bsc.langgraph4j.serializer.Serializer;
-import org.bsc.langgraph4j.serializer.std.NullableObjectSerializer;
-import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.junit.jupiter.api.Test;
 

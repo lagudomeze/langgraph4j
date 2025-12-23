@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 
@@ -72,6 +71,28 @@ public interface HasMetadata {
                 this.metadata = new HashMap<>(metadata);
             }
         }
+        @SuppressWarnings("unchecked")
+        public B putMetadata( Map<String,Object> newMetadata ) {
+            if( newMetadata != null && !newMetadata.isEmpty() ) {
+                if (metadata == null) {
+                    // Lazy initialization of metadata map
+                    metadata = new HashMap<>();
+                }
+                metadata.putAll(newMetadata);
+            }
+            return (B)this;
+        }
+
+        @SuppressWarnings("unchecked")
+        public B putMetadata( String key, Object value ) {
+            requireNonNull(key, "key cannot be null");
+            if( metadata == null ) {
+                // Lazy initialization of metadata map
+                metadata = new HashMap<>();
+            }
+            metadata.put( key, value);
+            return (B)this;
+        }
 
         @SuppressWarnings("unchecked")
         public B addMetadata( String key, Object value ) {
@@ -82,10 +103,9 @@ public interface HasMetadata {
             }
             else {
                 if( metadata.containsKey(key)) {
-                    throw new IllegalArgumentException( format("Metadata key [%s] already exists: ", key));
+                    throw new IllegalArgumentException( "Metadata key [%s] already exists: ".formatted(key));
                 }
             }
-
 
             metadata.put( key, value);
 

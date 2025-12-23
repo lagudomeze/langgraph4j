@@ -1,7 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.async.AsyncGenerator;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
+import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.InterruptionMetadata;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
@@ -10,6 +10,7 @@ import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -17,9 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,28 +40,65 @@ public class CompiledSubGraphTest {
         }
     }
 
-    private AsyncNodeAction<MyState> _makeNode(String withMessage) {
-        return node_async(state ->
-                Map.of("messages", format("[%s]", withMessage))
-        );
-    }
+    static class NodeActionBuilder {
+        String nodeId;
+        String basePath;
+        String attributeKey;
+        public NodeActionBuilder nodeId( String nodeId ) {
+            this.nodeId = nodeId;
+            return this;
+        }
+        public NodeActionBuilder basePath(String path ) {
+            this.basePath = path;
+            return this;
+        }
+        public NodeActionBuilder attributeKey(String attributeKey ) {
+            this.attributeKey = attributeKey;
+            return this;
+        }
 
-    private AsyncNodeAction<MyState> _makeNodeAndCheckState(String withMessage, String attributeKey) {
-        return node_async(state -> {
-                    var attributeValue = state.value(attributeKey).orElse("");
+        public AsyncNodeActionWithConfig<MyState> build() {
+            assertNotNull( nodeId );
+            return (state,config) -> {
 
-                    return Map.of("messages", format("[%s]", withMessage + attributeValue ));
+                assertTrue(config.metadata("lg4j_node").isPresent());
+                assertEquals(nodeId, config.metadata("lg4j_node").get());
 
+                if( basePath != null ) {
+                    assertTrue(config.metadata("lg4j_path").isPresent());
+                    assertEquals( "%s/%s".formatted(basePath,nodeId), config.metadata("lg4j_path").get());
                 }
 
-        );
+                if( attributeKey != null ) {
+                    var attributeValue = state.value(attributeKey).orElse("");
+                    return completedFuture(Map.of("messages", "[%s%s]".formatted( nodeId, attributeValue )));
+                }
+
+                return completedFuture(Map.of("messages", "[%s]".formatted( nodeId )));
+
+            };
+
+        }
+
     }
 
-    private AsyncNodeAction<MyState> _makeSubgraphNode(String parentNodeId, CompiledGraph<MyState> subGraph) {
+    private NodeActionBuilder nodeBuilder() {
+        return new NodeActionBuilder();
+    }
+
+    private AsyncNodeActionWithConfig<MyState> _makeNode(String nodeId) {
+        return nodeBuilder().nodeId( nodeId ).build();
+    }
+
+    private AsyncNodeActionWithConfig<MyState> _makeNodeAndCheckState(String nodeId, String attributeKey) {
+        return nodeBuilder().nodeId( nodeId ).attributeKey( attributeKey ).build();
+    }
+
+    private AsyncNodeActionWithConfig<MyState> _makeSubgraphNode(String parentNodeId, CompiledGraph<MyState> subGraph) {
         final var runnableConfig = RunnableConfig.builder()
                 .threadId(format("%s_subgraph", parentNodeId))
                 .build();
-        return node_async(state -> {
+        return node_async((state,config) -> {
 
             var input = (state.resumeSubgraph()) ?
                     GraphInput.resume() :
@@ -78,7 +117,7 @@ public class CompiledSubGraphTest {
         });
     }
 
-    private CompiledGraph<MyState> subGraph(BaseCheckpointSaver saver) throws Exception {
+    private CompiledGraph<MyState> subGraphWithInterruption( String subGraphId, BaseCheckpointSaver saver) throws Exception {
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -89,10 +128,12 @@ public class CompiledSubGraphTest {
 
         return new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE3.1")
-                .addNode("NODE3.1", _makeNode("NODE3.1"))
-                .addNode("NODE3.2", _makeNode("NODE3.2"))
-                .addNode("NODE3.3", _makeNode("NODE3.3"))
-                .addNode("NODE3.4", _makeNodeAndCheckState("NODE3.4", "newAttribute"))
+                .addNode("NODE3.1", nodeBuilder().nodeId("NODE3.1").basePath(subGraphId).build())
+                .addNode("NODE3.2", nodeBuilder().nodeId("NODE3.2").basePath(subGraphId).build())
+                .addNode("NODE3.3", nodeBuilder().nodeId("NODE3.3").basePath(subGraphId).build())
+                .addNode("NODE3.4", nodeBuilder().nodeId("NODE3.4")
+                                                        .basePath(subGraphId)
+                                                        .attributeKey("newAttribute").build())
                 .addEdge("NODE3.1", "NODE3.2")
                 .addEdge("NODE3.2", "NODE3.3")
                 .addEdge("NODE3.3", "NODE3.4")
@@ -112,7 +153,7 @@ public class CompiledSubGraphTest {
                 .checkpointSaver(saver)
                 .build();
 
-        var subGraph = subGraph(saver); // create subgraph
+        var subGraph = subGraphWithInterruption( "NODE3", saver); // create subgraph
 
         var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE1")
@@ -190,7 +231,7 @@ public class CompiledSubGraphTest {
                 .checkpointSaver(saver)
                 .build();
 
-        var subGraph = subGraph(saver); // create subgraph
+        var subGraph = subGraphWithInterruption("NODE3", saver); // create subgraph
 
         var parentGraph =  new StateGraph<>(MyState.SCHEMA, stateSerializer)
                 .addEdge(START, "NODE1")
@@ -262,7 +303,8 @@ public class CompiledSubGraphTest {
         var stateSerializer = new ObjectStreamStateSerializer<>(MyState::new);
 
         BaseCheckpointSaver childSaver = new MemorySaver();
-        var subGraph = subGraph( childSaver ); // create subgraph
+
+        var subGraph = subGraphWithInterruption( "NODE3", childSaver ); // create subgraph
 
         var compileConfig = CompileConfig.builder()
                 .checkpointSaver(parentSaver)
@@ -376,4 +418,67 @@ public class CompiledSubGraphTest {
 
     }
 
+
+    @Test
+    public  void compiledSubGraphTrackingTest() throws Exception {
+
+        final var subGraphId =  "subgraph1";
+        final var subSubGraphId = "subgraph2";
+
+        var subSubGraphBasePath = "%s/%s".formatted( subGraphId, subSubGraphId );
+        var subSubGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addNode("foo1", nodeBuilder().nodeId("foo1").basePath(subSubGraphBasePath).build())
+                .addNode("foo2", nodeBuilder().nodeId("foo2").basePath(subSubGraphBasePath).build())
+                .addNode("foo3", nodeBuilder().nodeId("foo3").basePath(subSubGraphBasePath).build())
+                .addEdge(StateGraph.START, "foo1")
+                .addEdge("foo1", "foo2")
+                .addEdge("foo2", "foo3")
+                .addEdge("foo3", StateGraph.END)
+                .compile();
+
+        var subGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addNode("bar1", nodeBuilder().nodeId("bar1").basePath(subGraphId).build())
+                .addNode(subSubGraphId, subSubGraph)
+                .addNode("bar2", nodeBuilder().nodeId("bar2").basePath(subGraphId).build())
+                .addEdge(StateGraph.START, "bar1")
+                .addEdge("bar1", "subgraph2")
+                .addEdge("subgraph2", "bar2")
+                .addEdge("bar2", StateGraph.END)
+                .compile();
+
+        var stateGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addNode("main1", nodeBuilder().nodeId("main1").build())
+                .addNode(subGraphId, subGraph)
+                .addNode("main2",  nodeBuilder().nodeId("main2").build())
+                .addEdge(StateGraph.START, "main1")
+                .addEdge("main1", "subgraph1")
+                .addEdge("subgraph1", "main2")
+                .addEdge("main2", StateGraph.END)
+                .compile();
+
+        var runnableConfig = RunnableConfig.builder()
+                .streamMode(CompiledGraph.StreamMode.VALUES)
+                .build();
+
+        var input = GraphInput.args(Map.of());
+
+        var generator = stateGraph.stream(input, runnableConfig);
+
+        var output = generator.stream()
+                //.peek( out -> log.info("output: {}", out) )
+                .reduce((a, b) -> b);
+
+        assertTrue( output.isPresent() );
+        assertTrue( output.get().isEND() );
+        final var state = output.get().state();
+
+        assertIterableEquals(List.of(
+                        "[main1]",
+                        "[bar1]",
+                        "[foo1]",
+                        "[foo2]",
+                        "[foo3]",
+                        "[bar2]",
+                        "[main2]"), state.messages() );
+    }
 }

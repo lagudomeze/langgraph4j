@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static java.lang.String.format;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
+import static org.bsc.langgraph4j.hook.TrackGraphNodeHook.runnableConfigBuilderWithSubgraphPath;
 
 /**
  * Represents an action to perform a subgraph on a given state with a specific configuration.
@@ -30,11 +32,11 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
 ) implements AsyncNodeActionWithConfig<State> {
 
     public String subGraphId() {
-        return  format("subgraph_%s", nodeId);
+        return "subgraph_%s".formatted(nodeId);
     }
 
     public String resumeSubGraphId() {
-        return  format("resume_%s",subGraphId() );
+        return  "resume_%s".formatted(subGraphId());
     }
 
     /**
@@ -51,28 +53,26 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
         final boolean resumeSubgraph = config.metadata( resumeSubGraphId(), new TypeRef<Boolean>() {} )
                                         .orElse( false );
 
-        RunnableConfig subGraphRunnableConfig = config;
+        var subGraphRunnableConfig = runnableConfigBuilderWithSubgraphPath(config, nodeId ).build();
+
         var parentSaver = parentCompileConfig.checkpointSaver();
         var subGraphSaver = subGraph.compileConfig.checkpointSaver();
 
         if( subGraphSaver.isPresent() ) {
             if( parentSaver.isEmpty() ) {
-                return CompletableFuture.failedFuture(new IllegalStateException("Missing CheckpointSaver in parent graph!"));
+                return failedFuture(new IllegalStateException("Missing CheckpointSaver in parent graph!"));
             }
 
             // Check saver are the same instance
             if( parentSaver.get() == subGraphSaver.get() ) {
-                subGraphRunnableConfig = RunnableConfig.builder()
+                subGraphRunnableConfig = RunnableConfig.builder(subGraphRunnableConfig)
                         .threadId( config.threadId()
-                                            .map( threadId -> format("%s_%s", threadId, subGraphId()))
+                                            .map( threadId -> "%s_%s".formatted( threadId, subGraphId()))
                                             .orElseGet(this::subGraphId))
                         .streamMode( config.streamMode() )
                         .build();
             }
         }
-
-
-        final CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
 
         try {
 
@@ -85,13 +85,11 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
             var generator = subGraph.stream(input, subGraphRunnableConfig)
                     .map( n -> SubGraphOutputFactory.createFormNodeOutput( n, nodeId) );
 
-            future.complete( Map.of(format("%s_%s",subGraphId(), UUID.randomUUID()), generator));
+            return completedFuture( Map.of("%s_%s".formatted(subGraphId(), UUID.randomUUID()), generator));
 
         } catch (Exception e) {
 
-            future.completeExceptionally(e);
+            return failedFuture(e);
         }
-
-        return future;
     }
 }

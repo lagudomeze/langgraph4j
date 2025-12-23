@@ -99,6 +99,21 @@ public final class RunnableConfig implements HasMetadata {
 
     }
 
+    /**
+     * Updates the metadata of the configuration with the provided new metadata.
+     *
+     * @param newMetadata The map containing the new metadata to be merged.
+     * @return A new {@code RunnableConfig} instance with updated metadata, or the current instance if no changes are needed.
+     */
+    public RunnableConfig updateMetadata( Map<String,Object> newMetadata ) {
+
+        if( newMetadata == null || newMetadata.isEmpty() ) return this;
+
+        return new RunnableConfig.Builder( this)
+                .putMetadata( newMetadata )
+                .build();
+    }
+
     @Override
     public Set<String> metadataKeys() {
         return ofNullable(metadata).map( Map::keySet ).orElseGet(Set::of);
@@ -170,7 +185,9 @@ public final class RunnableConfig implements HasMetadata {
             this.checkPointId   = config.checkPointId;
             this.nextNode       = config.nextNode;
             this.streamMode     = config.streamMode;
+
         }
+
         /**
          * Sets the ID of the thread.
          *

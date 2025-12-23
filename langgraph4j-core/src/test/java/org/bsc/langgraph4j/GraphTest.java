@@ -2,7 +2,6 @@ package org.bsc.langgraph4j;
 
 import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
-import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -19,15 +18,15 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
-import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
+import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit test for simple App.
  */
-public class StateGraphTest {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StateGraphTest.class);
+public class GraphTest {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GraphTest.class);
 
     static class State extends MessagesState<String> {
 
@@ -60,8 +59,8 @@ public class StateGraphTest {
         exception = assertThrows(GraphStateException.class, workflow::compile);
         assertEquals("edge sourceId 'agent_1' refers to undefined node!", exception.getMessage());
 
-        workflow.addNode("agent_1", node_async((state) -> {
-            log.info("agent_1\n{}", state);
+        workflow.addNode("agent_1", node_async((state,config) -> {
+            log.info("agent_1 {}", state);
             return Map.of("prop1", "test");
         }));
 
@@ -75,7 +74,7 @@ public class StateGraphTest {
                 workflow.addEdge(END, "agent_1"));
         log.info("{}", exception.getMessage());
 
-        workflow.addNode("agent_2", node_async(state -> {
+        workflow.addNode("agent_2", node_async((state,config) -> {
             log.info("agent_2\n{}", state);
             return Map.of("prop2", "test");
         }));
@@ -97,8 +96,12 @@ public class StateGraphTest {
 
         StateGraph<AgentState> workflow = new StateGraph<>(AgentState::new)
                 .addEdge(START, "agent_1")
-                .addNode("agent_1", node_async(state -> {
-                    log.info("agent_1\n{}", state);
+                .addNode("agent_1", node_async( (state, config) -> {
+
+                    assertTrue( config.metadata("langgraph_node").isPresent());
+                    assertEquals( "agent_1", config.metadata("langgraph_node").get());
+
+                    log.info("agent_1 {}", state);
                     return Map.of("prop1", "test");
                 }))
                 .addEdge("agent_1", END);
@@ -119,9 +122,12 @@ public class StateGraphTest {
 
         var agent = AsyncNodeActionWithConfig.node_async((state, config) -> {
 
+            var currentNode = config.metadata("langgraph_node");
+            assertTrue( currentNode.isPresent());
+            assertEquals( "agent_1", currentNode.get());
             assertTrue(config.metadata("configData").isPresent());
 
-            log.info("agent_1\n{}", state);
+            log.info("{} {}", currentNode.get(), state);
             return Map.of("prop1", "test");
         });
 
@@ -152,8 +158,12 @@ public class StateGraphTest {
 
         StateGraph<AgentState> workflow = new StateGraph<>(schema, AgentState::new)
                 .addEdge(START, "agent_1")
-                .addNode("agent_1", node_async(state -> {
-                    log.info("agent_1\n{}", state);
+                .addNode("agent_1", node_async((state,config) -> {
+                    var currentNode = config.metadata("langgraph_node");
+                    assertTrue( currentNode.isPresent());
+                    assertEquals( "agent_1", currentNode.get());
+
+                    log.info("{} {}", currentNode.get(), state);
 
                     return Map.of("prop1", MARK_FOR_REMOVAL);
 
@@ -176,16 +186,29 @@ public class StateGraphTest {
     void testWithAppender() throws Exception {
 
         StateGraph<State> workflow = new StateGraph<>(State.SCHEMA, State::new)
-                .addNode("agent_1", node_async(state -> {
-                    System.out.println("agent_1");
+                .addNode("agent_1", node_async((state,config) -> {
+
+                    var currentNode = config.metadata("langgraph_node");
+                    assertTrue( currentNode.isPresent());
+                    assertEquals( "agent_1", currentNode.get());
+
+                    log.info( "{}", currentNode.get() );
                     return Map.of("messages", "message1");
                 }))
-                .addNode("agent_2", node_async(state -> {
-                    System.out.println("agent_2");
+                .addNode("agent_2", node_async((state,config) -> {
+                    var currentNode = config.metadata("langgraph_node");
+                    assertTrue( currentNode.isPresent());
+                    assertEquals( "agent_2", currentNode.get());
+
+                    log.info( "{}", currentNode.get() );
                     return Map.of("messages", new String[]{"message2"});
                 }))
-                .addNode("agent_3", node_async(state -> {
-                    System.out.println("agent_3");
+                .addNode("agent_3", node_async((state,config) -> {
+                    var currentNode = config.metadata("langgraph_node");
+                    assertTrue( currentNode.isPresent());
+                    assertEquals( "agent_3", currentNode.get());
+
+                    log.info( "{}", currentNode.get() );
                     int steps = state.messages().size() + 1;
                     return Map.of("messages", "message3", "steps", steps);
                 }))
@@ -199,7 +222,7 @@ public class StateGraphTest {
         Optional<State> result = app.invoke(Map.of());
 
         assertTrue(result.isPresent());
-        System.out.println(result.get().data());
+        log.info( "{}",result.get().data());
         assertEquals(3, result.get().steps());
         assertEquals(3, result.get().messages().size());
         assertIterableEquals(List.of("message1", "message2", "message3"), result.get().messages());
@@ -210,15 +233,15 @@ public class StateGraphTest {
     void testWithAppenderOneRemove() throws Exception {
 
         StateGraph<State> workflow = new StateGraph<>(State.SCHEMA, State::new)
-                .addNode("agent_1", node_async(state -> {
+                .addNode("agent_1", node_async((state,config) -> {
                     log.info("agent_1");
                     return Map.of("messages", "message1");
                 }))
-                .addNode("agent_2", node_async(state -> {
+                .addNode("agent_2", node_async((state,config) -> {
                     log.info("agent_2");
                     return Map.of("messages", new String[]{"message2"});
                 }))
-                .addNode("agent_3", node_async(state -> {
+                .addNode("agent_3", node_async((state,config) -> {
                     log.info("agent_3");
                     int steps = state.messages().size() + 1;
                     return Map.of("messages", RemoveByHash.of("message2"), "steps", steps);
@@ -244,16 +267,16 @@ public class StateGraphTest {
     void testWithAppenderOneAppendOneRemove() throws Exception {
 
         StateGraph<State> workflow = new StateGraph<>(State.SCHEMA, State::new)
-                .addNode("agent_1", node_async(state ->
+                .addNode("agent_1", node_async((state,config) ->
                         Map.of("messages", "message1")
                 ))
-                .addNode("agent_2", node_async(state ->
+                .addNode("agent_2", node_async((state,config) ->
                         Map.of("messages", new String[]{"message2"})
                 ))
-                .addNode("agent_3", node_async(state ->
+                .addNode("agent_3", node_async((state,config) ->
                         Map.of("messages", List.of("message3", RemoveByHash.of("message2")))
                 ))
-                .addNode("agent_4", node_async(state -> {
+                .addNode("agent_4", node_async((state,config) -> {
                     int steps = state.messages().size() + 1;
                     return Map.of("messages", List.of("message4"), "steps", steps);
 
@@ -279,11 +302,17 @@ public class StateGraphTest {
     @Test
     public void testWithSubgraph() throws Exception {
 
-        var childStep1 = node_async((State state) -> Map.of("messages", "child:step1"));
+        AsyncNodeActionWithConfig<State> childStep1 =
+                node_async(( state, config) ->
+                        Map.of("messages", "child:step1"));
 
-        var childStep2 = node_async((State state) -> Map.of("messages", "child:step2"));
+        AsyncNodeActionWithConfig<State> childStep2 =
+                node_async((state,config) ->
+                        Map.of("messages", "child:step2"));
 
-        var childStep3 = node_async((State state) -> Map.of("messages", "child:step3"));
+        AsyncNodeActionWithConfig<State> childStep3 =
+                node_async((state,config) ->
+                        Map.of("messages", "child:step3"));
 
         var workflowChild = new StateGraph<>(State.SCHEMA, State::new)
                 .addNode("child:step_1", childStep1)
@@ -295,11 +324,17 @@ public class StateGraphTest {
                 .addEdge("child:step_3", END)
                 //.compile()
                 ;
-        var step1 = node_async((State state) -> Map.of("messages", "step1"));
+        AsyncNodeActionWithConfig<State> step1 =
+                node_async(( state, config) ->
+                        Map.of("messages", "step1"));
 
-        var step2 = node_async((State state) -> Map.of("messages", "step2"));
+        AsyncNodeActionWithConfig<State> step2 =
+                node_async(( state, config) ->
+                        Map.of("messages", "step2"));
 
-        var step3 = node_async((State state) -> Map.of("messages", "step3"));
+        AsyncNodeActionWithConfig<State> step3 =
+                node_async(( state, config) ->
+                        Map.of("messages", "step3"));
 
         var workflowParent = new StateGraph<>(State.SCHEMA, State::new)
                 .addNode("step_1", step1)
@@ -324,8 +359,8 @@ public class StateGraphTest {
 
     }
 
-    private AsyncNodeAction<State> makeNode(String id) {
-        return node_async(state -> {
+    private AsyncNodeActionWithConfig<State> makeNode(String id) {
+        return node_async((state,config) -> {
             log.info("call node {}", id);
             return Map.of("messages", id);
         });
