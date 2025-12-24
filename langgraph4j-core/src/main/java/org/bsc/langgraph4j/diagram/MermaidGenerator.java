@@ -2,7 +2,6 @@ package org.bsc.langgraph4j.diagram;
 
 import org.bsc.langgraph4j.DiagramGenerator;
 
-import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -26,28 +25,28 @@ public class MermaidGenerator extends DiagramGenerator {
         }
 
         if( isStart(id) || isEnd(id)) {
-            return format( "%s%s", id, ctx.title());
+            return "%s%s".formatted( id, ctx.title());
         }
 
-        return format("%s_%s", id, ctx.title());
+        return "%s_%s".formatted( id, ctx.title());
     }
 
     @Override
     protected void appendHeader( Context ctx ) {
         if( ctx.isSubGraph() ) {
                 ctx.sb()
-                .append(format("subgraph %s\n", ctx.title()))
-                .append(format("\t%1$s((start)):::%1$s\n", formatNode(START, ctx)))
-                .append(format("\t%1$s((stop)):::%1$s\n", formatNode(END, ctx)))
+                .append("subgraph %s\n".formatted( ctx.title()))
+                .append("\t%1$s((start)):::%1$s\n".formatted( formatNode(START, ctx)))
+                .append("\t%1$s((stop)):::%1$s\n".formatted( formatNode(END, ctx)))
                 ;
         }
         else {
                 ofNullable(ctx.title())
-                    .map( title -> ctx.sb().append(format("---\ntitle: %s\n---\n", title)) )
+                    .map( title -> ctx.sb().append("---\ntitle: %s\n---\n".formatted( title)) )
                     .orElseGet(ctx::sb)
                 .append("flowchart TD\n")
-                .append(format("\t%s((start))\n", START))
-                .append(format("\t%s((stop))\n", END))
+                .append("\t%s((start))\n".formatted( START))
+                .append("\t%s((stop))\n".formatted( END))
                 ;
         }
     }
@@ -60,27 +59,27 @@ public class MermaidGenerator extends DiagramGenerator {
         else {
             ctx.sb()
                 .append('\n')
-                .append( format("\tclassDef %s fill:black,stroke-width:1px,font-size:xx-small;\n", formatNode(START, ctx)))
-                .append( format("\tclassDef %s fill:black,stroke-width:1px,font-size:xx-small;\n", formatNode(END, ctx) ));
+                .append( "\tclassDef %s fill:black,stroke-width:1px,font-size:xx-small;\n".formatted( formatNode(START, ctx)))
+                .append( "\tclassDef %s fill:black,stroke-width:1px,font-size:xx-small;\n".formatted( formatNode(END, ctx) ));
         }
     }
 
    @Override
    protected void declareConditionalStart(Context ctx, String name) {
        ctx.sb().append('\t');
-       ctx.sb().append( format("%s{\"check state\"}\n", formatNode(name, ctx) ) );
+       ctx.sb().append( "%s{\"check state\"}\n".formatted( formatNode(name, ctx) ) );
    }
 
    @Override
    protected void declareNode(Context ctx, String name) {
        ctx.sb().append('\t');
-       ctx.sb().append( format( "%s(\"%s\")\n", formatNode(name, ctx), name ) );
+       ctx.sb().append(  "%s(\"%s\")\n".formatted( formatNode(name, ctx), name ) );
    }
 
    @Override
    protected void declareConditionalEdge(Context ctx, int ordinal) {
        ctx.sb().append('\t');
-       ctx.sb().append( format("%s{\"check state\"}\n", formatNode( format("condition%d", ordinal), ctx )));
+       ctx.sb().append( "%s{\"check state\"}\n".formatted( formatNode( "condition%d".formatted( ordinal ), ctx )));
    }
 
     @Override
@@ -96,8 +95,8 @@ public class MermaidGenerator extends DiagramGenerator {
         to = formatNode( to, ctx );
         ctx.sb().append(
                 switch( style ) {
-                    case CONDITIONAL -> format("%1$s:::%1$s -.-> %2$s:::%2$s\n", from, to);
-                    default ->  format("%1$s:::%1$s --> %2$s:::%2$s\n", from, to);
+                    case CONDITIONAL -> "%1$s:::%1$s -.-> %2$s:::%2$s\n".formatted( from, to);
+                    default ->  "%1$s:::%1$s --> %2$s:::%2$s\n".formatted( from, to);
                 });
     }
 
@@ -109,8 +108,8 @@ public class MermaidGenerator extends DiagramGenerator {
 
         ctx.sb().append(
                 switch( style ) {
-                    case CONDITIONAL -> format("%1$s:::%1$s -.->|%2$s| %3$s:::%3$s\n", from, description, to);
-                    default ->  format("%1$s:::%1s -->|%2$s| %3$s:::%3$s\n", from, description, to);
+                    case CONDITIONAL -> "%1$s:::%1$s -.->|%2$s| %3$s:::%3$s\n".formatted( from, description, to);
+                    default ->  "%1$s:::%1s -->|%2$s| %3$s:::%3$s\n".formatted( from, description, to);
                 });
     }
 }
