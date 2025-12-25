@@ -1,6 +1,7 @@
-package org.bsc.langgraph4j.action;
+package org.bsc.langgraph4j.internal.node;
 
 import org.bsc.langgraph4j.RunnableConfig;
+import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.hook.NodeHooks;
 import org.bsc.langgraph4j.state.AgentState;
 

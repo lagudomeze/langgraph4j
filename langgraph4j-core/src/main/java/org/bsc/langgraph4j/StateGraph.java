@@ -5,6 +5,7 @@ import org.bsc.langgraph4j.hook.TrackGraphNodeHook;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.edge.EdgeCondition;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
+import org.bsc.langgraph4j.internal.node.ManagedAsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNode;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
