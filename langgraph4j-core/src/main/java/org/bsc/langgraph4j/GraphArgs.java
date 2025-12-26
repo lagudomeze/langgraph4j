@@ -10,4 +10,7 @@ public record GraphArgs(
     public GraphArgs {
         requireNonNull( value, "value cannot be null");
     }
+    public GraphArgs() {
+        this(Map.of());
+    }
 }
