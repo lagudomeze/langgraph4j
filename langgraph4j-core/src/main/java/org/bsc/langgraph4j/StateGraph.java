@@ -5,7 +5,7 @@ import org.bsc.langgraph4j.hook.TrackGraphNodeHook;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.edge.EdgeCondition;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
-import org.bsc.langgraph4j.internal.node.ManagedAsyncNodeActionWithConfig;
+import org.bsc.langgraph4j.internal.node.ManagedAsyncNodeAction;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNode;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
@@ -149,11 +149,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
             throw Errors.invalidNodeIdentifier.exception(END);
         }
 
-        var node = new Node<>(id, (config ) -> {
-            var result = new ManagedAsyncNodeActionWithConfig<>(action);
-            result.hooks.registerWrapCall( new TrackGraphNodeHook<>(id) );
-            return result;
-        });
+        var node = new Node<>(id, ManagedAsyncNodeAction.factory( id, action ) );
 
         if (nodes.elements.contains(node)) {
             throw Errors.duplicateNodeError.exception(id);
