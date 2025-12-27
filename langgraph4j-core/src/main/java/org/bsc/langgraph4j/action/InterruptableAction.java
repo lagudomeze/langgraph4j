@@ -1,5 +1,6 @@
 package org.bsc.langgraph4j.action;
 
+import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.state.AgentState;
 
 import java.util.Optional;
@@ -20,5 +21,22 @@ public interface InterruptableAction<State extends AgentState> {
      * @return An {@link Optional} containing {@link InterruptionMetadata} if the execution
      *         should be interrupted. Returns an empty {@link Optional} to continue execution.
      */
-    Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state );
+    default Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state ) {
+        return Optional.empty();
+    }
+
+    /**
+     * Determines whether the graph execution should be interrupted at the current node.
+     * override this method if you need information by current RunnableConfig
+     *
+     * @param nodeId The identifier of the current node being processed.
+     * @param state  The current state of the agent.
+     * @param config The runnable configuration.
+     * @return An {@link Optional} containing {@link InterruptionMetadata} if the execution
+     *         should be interrupted. Returns an empty {@link Optional} to continue execution.
+     */
+    default Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state, RunnableConfig config ) {
+        return interrupt(nodeId, state);
+    }
+
 }
