@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a node in a graph, characterized by a unique identifier and a factory for creating
@@ -29,8 +30,8 @@ public class Node<State extends AgentState> {
     private final ActionFactory<State> actionFactory;
 
     public Node(String id, ActionFactory<State> actionFactory ) {
-       this.id = id;
-       this.actionFactory = actionFactory;
+       this.id = requireNonNull(id, "id cannot be null");
+       this.actionFactory = requireNonNull(actionFactory, "actionFactory cannot be null");
     }
 
     /**
