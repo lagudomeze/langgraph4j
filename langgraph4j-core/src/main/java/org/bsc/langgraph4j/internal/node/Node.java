@@ -31,7 +31,7 @@ public class Node<State extends AgentState> {
 
     public Node(String id, ActionFactory<State> actionFactory ) {
        this.id = requireNonNull(id, "id cannot be null");
-       this.actionFactory = requireNonNull(actionFactory, "actionFactory cannot be null");
+       this.actionFactory = actionFactory;
     }
 
     /**
