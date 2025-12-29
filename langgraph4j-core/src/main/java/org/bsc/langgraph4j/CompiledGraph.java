@@ -16,6 +16,7 @@ import org.bsc.langgraph4j.utils.TypeRef;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -25,7 +26,6 @@ import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.failedFuture;
 import static java.util.stream.Collectors.toList;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
@@ -739,34 +739,33 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     ;
         }
 
-        private CompletableFuture<Data<Output>> evaluateAction( AsyncNodeActionWithConfig<State> action, RunnableConfig runnableConfig ) {
-                try {
-                    return action.apply( cloneState(context.currentState()), runnableConfig)
-                            .thenApply(TryFunction.Try(updateState -> {
+        private Data<Output> applyAction( AsyncNodeActionWithConfig<State> action,
+                                          State clonedState,
+                                          RunnableConfig runnableConfig ) throws ExecutionException, InterruptedException
+        {
+            return action.apply( clonedState, runnableConfig)
+                    .thenApply(TryFunction.Try(updateState -> {
 
+                        Optional<Data<Output>> embed = getEmbedGenerator( action, updateState);
+                        if (embed.isPresent()) {
+                            return embed.get();
+                        }
 
-                                Optional<Data<Output>> embed = getEmbedGenerator( action, updateState);
-                                if (embed.isPresent()) {
-                                    return embed.get();
-                                }
+                        context.setCurrentState( AgentState.updateState(context.currentState(), updateState, stateGraph.getChannels()) );
 
-                                context.setCurrentState( AgentState.updateState(context.currentState(), updateState, stateGraph.getChannels()) );
+                        if (compileConfig.interruptBeforeEdge() && compileConfig.interruptsAfter().contains(context.currentNodeId())) {
+                            //nextNodeId = INTERRUPT_AFTER;
+                            context.setNextNodeId(INTERRUPT_AFTER);
+                        } else {
+                            var nextNodeCommand = nextNodeId(context.currentNodeId(), context.currentState(), runnableConfig);
+                            context.setNextNodeId(nextNodeCommand.gotoNode());
+                            context.setCurrentState( nextNodeCommand.update() );
+                        }
 
-                                if (compileConfig.interruptBeforeEdge() && compileConfig.interruptsAfter().contains(context.currentNodeId())) {
-                                    //nextNodeId = INTERRUPT_AFTER;
-                                    context.setNextNodeId(INTERRUPT_AFTER);
-                                } else {
-                                    var nextNodeCommand = nextNodeId(context.currentNodeId(), context.currentState(), runnableConfig);
-                                    context.setNextNodeId(nextNodeCommand.gotoNode());
-                                    context.setCurrentState( nextNodeCommand.update() );
-                                }
+                        return Data.of(getNodeOutput());
 
-                                return Data.of(getNodeOutput());
-
-                            }));
-                } catch( Exception e ) {
-                    return failedFuture(e);
-                }
+                    }))
+                    .get();
         }
 
         private CompletableFuture<Output> getNodeOutput() throws Exception {
@@ -862,7 +861,9 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 context.setCurrentNodeId( context.nextNodeId() );
 
+                //
                 // UPDATE RUNNABLE CONFIG METADATA
+                //
                 final var newMetadata = new HashMap<String,Object>(2);
                 newMetadata.put(RunnableConfig.NODE_ID, context.currentNodeId());
                 compileConfig.graphId()
@@ -874,22 +875,26 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 final var newConfig = this.config.updateMetadata( newMetadata );
 
+                //
+                // EVALUATE ACTION
+                //
                 final var action = nodes.get( context.currentNodeId() );
 
                 if (action == null)
                     throw RunnableErrors.missingNode.exception(context.currentNodeId());
 
+                final var clonedState = cloneState(context.currentState());
+
                 if( action instanceof InterruptableAction<?>) {
                     @SuppressWarnings("unchecked")
                     final var interruption = (InterruptableAction<State>) action;
-                    final var interruptMetadata = interruption.interrupt(context.currentNodeId(), cloneState(context.currentState()), newConfig );
+                    final var interruptMetadata = interruption.interrupt(context.currentNodeId(), clonedState, newConfig );
                     if( interruptMetadata.isPresent() ) {
                         return Data.done( interruptMetadata.get() );
                     }
                 }
-
                 try {
-                    return evaluateAction(action, newConfig).get();
+                    return applyAction(action, clonedState, newConfig);
                 }
                 catch( InterruptedException ex ) {
                     if( action instanceof ParallelNode.AsyncParallelNodeAction<?> parallelNodeAction ) {
@@ -897,6 +902,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                     }
                     throw ex;
                 }
+
             }
             catch( Throwable e ) {
                 log.error( e.getMessage(), e );
