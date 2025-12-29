@@ -10,6 +10,8 @@ import org.bsc.langgraph4j.utils.EdgeMappings;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -44,6 +46,17 @@ public class GraphTest {
         return map.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .collect(Collectors.toList());
+    }
+
+    @Test
+    void completableFutureException() {
+
+        var future = CompletableFuture.supplyAsync( () -> "test" )
+                .thenApply( v -> { throw new RuntimeException(v); } );
+
+        var ex = assertThrowsExactly( CompletionException.class, future::join );
+
+        assertInstanceOf( RuntimeException.class, ex.getCause() );
     }
 
     @Test
