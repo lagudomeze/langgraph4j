@@ -20,7 +20,9 @@ public interface InterruptableAction<State extends AgentState> {
      * @param state  The current state of the agent.
      * @return An {@link Optional} containing {@link InterruptionMetadata} if the execution
      *         should be interrupted. Returns an empty {@link Optional} to continue execution.
+*    * @deprecated use {@link #interrupt(String,State,RunnableConfig)} instead
      */
+    @Deprecated(forRemoval = true)
     default Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state ) {
         return Optional.empty();
     }
