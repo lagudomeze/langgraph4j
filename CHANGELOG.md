@@ -2,6 +2,190 @@
 
 
 
+<!-- "name: v1.7.9" is a release tag -->
+
+## [v1.7.9](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.9) (2025-12-29)
+
+### Features
+
+ *  **AsyncNodeAction**  Add async node action support with interrupt handling ([b98347df01158bb](https://github.com/bsorrentino/langgraph4j/commit/b98347df01158bbf88dbc8bf57055b2d6d99985e))
+     > Implement asynchronous node action conversion with CompletableFuture and interruptable action proxy support
+     > work on #304
+   
+ *  **StateGraph**  Add new addNode method with ActionFactory ([a041668511024d5](https://github.com/bsorrentino/langgraph4j/commit/a041668511024d5cefb76f726f6225518c17d471))
+   
+ *  **GraphPath**  Add GraphPath class for graph path manipulation ([2596b9068bd0c99](https://github.com/bsorrentino/langgraph4j/commit/2596b9068bd0c99741309c90f9b2fd20c080102b))
+     > - add unit test
+     > work on #298
+   
+ *  **CompiledGraph**  Handle resume arguments in resume process ([1b585c1967f41fe](https://github.com/bsorrentino/langgraph4j/commit/1b585c1967f41fe3331f437821040a43c26f4a68))
+     > resolve #302
+   
+ *  **TrackGraphNodeHook**  Add node tracking metadata to async actions ([f0842dd2d0a1f4e](https://github.com/bsorrentino/langgraph4j/commit/f0842dd2d0a1f4ec96338ae5d53165eba11083a0))
+     > Implement hook to capture node ID in metadata for async node actions
+     > work on #298
+   
+ *  **RunnableConfig**  Add method to update metadata ([2cbad315c918e80](https://github.com/bsorrentino/langgraph4j/commit/2cbad315c918e8018eaada65f073903d4e72f5e5))
+     > New method updateMetadata allows merging new metadata into existing configuration
+     > work on #298
+   
+ *  **HasMetadata**  Add putMetadata methods for metadata manipulation ([02438596b5f6b77](https://github.com/bsorrentino/langgraph4j/commit/02438596b5f6b770e4c0899f83aff127f5fd7580))
+     > work on #298
+   
+ *  **core**  introduce hooks node management ([c721500f9a9a3a8](https://github.com/bsorrentino/langgraph4j/commit/c721500f9a9a3a8ac0ee17f550b85a69dc19fdc2))
+     > work on #291 and #298
+   
+
+### Bug Fixes
+
+ -  update anySubGraphWithId() method implementation with recursive subgraph id search ([14d6d738d1c978d](https://github.com/bsorrentino/langgraph4j/commit/14d6d738d1c978d3f93976cd0a97c5b03674f739))
+     > - add related unit tests
+     > resolve #300
+
+
+### Documentation
+
+ -  bump to release 1.7.8 ([a4c3b41e73ba916](https://github.com/bsorrentino/langgraph4j/commit/a4c3b41e73ba916bdd060c0dd074ae9e10735b52))
+
+ -  Updated interrupt method to include RunnableConfig parameter for configuration options ([1ca37981c487aac](https://github.com/bsorrentino/langgraph4j/commit/1ca37981c487aac9280f4a52c5093a3471d56da5))
+
+ -  add `GraphInput.resume(Map)` usage ([9141a956f027dca](https://github.com/bsorrentino/langgraph4j/commit/9141a956f027dca2e8ea65331ec65e0297eb327d))
+     > work on #302
+
+ -  update integration docs ([248ee596295aff7](https://github.com/bsorrentino/langgraph4j/commit/248ee596295aff7a30cbf60819442e5824213d7f))
+
+ -  update changelog ([d2437846a144cdb](https://github.com/bsorrentino/langgraph4j/commit/d2437846a144cdb1028d6cad3fb669701a681e15))
+
+
+### Refactor
+
+ -  **ManagedAsyncNodeAction**  refactor factory method to use dynamic proxy for interface composition ([d5ca55baf187b3e](https://github.com/bsorrentino/langgraph4j/commit/d5ca55baf187b3e77c9c930de77a6aafa3c54580))
+    > Implement dynamic proxy to combine AsyncNodeActionWithConfig and InterruptableAction interfaces, enabling method interception for interrupt operations while maintaining interface compatibility
+ > work on #304
+
+ -  **AsyncNodeActionWithConfig**  Refactor async action to support interruptible action proxy ([49dc1c1d321cf6d](https://github.com/bsorrentino/langgraph4j/commit/49dc1c1d321cf6dab303ea63e8949cf38320049e))
+    > Add proxy support for InterruptableAction integration in async node actions
+ > work on #304
+
+ -  **CompiledGraph**  Refactor action evaluation to minimze cloneState calls ([6aed2a2709ddb65](https://github.com/bsorrentino/langgraph4j/commit/6aed2a2709ddb65e6026781f6f397832247acac4))
+   
+ -  **InterruptableAction**  Deprecate interrupt(String, State) method in favour of   interrupt(String, State, RunnableConfig) ([3c6ec4d0237328a](https://github.com/bsorrentino/langgraph4j/commit/3c6ec4d0237328a84676ad4a728d58343ee19c62))
+   
+ -  **StateGraph**  Add null checks for actionFactory in addNode( String, actionFactory ) ([dc006b0ec4c3b68](https://github.com/bsorrentino/langgraph4j/commit/dc006b0ec4c3b684b61eefe1b908d2925281fd2c))
+   
+ -  **Node**  make actionFactory nullable ([301259cf6369aaf](https://github.com/bsorrentino/langgraph4j/commit/301259cf6369aafaea30d8b80b199ede358fc3a6))
+   
+ -  **node**  Add null checks using requireNonNull ([c2ad8f0e21c1f85](https://github.com/bsorrentino/langgraph4j/commit/c2ad8f0e21c1f8594b3895e918ab7e2238e69980))
+   
+ -  **CompiledGraph**  Added metadata handling for node ID and graph path. ([9bbfe0fe4348a7f](https://github.com/bsorrentino/langgraph4j/commit/9bbfe0fe4348a7f02aa5f317bf83d8d7f0d93f9c))
+    > - Updated evaluateAction method to accept custom RunnableConfig parameter.
+ > - Updated config usage across action execution flow.
+ > work on #298
+
+ -  **RunnableConfig**  add nodeId(), graphId() and graphPath() methods as shortcuts to metadata access ([e95978efafe9605](https://github.com/bsorrentino/langgraph4j/commit/e95978efafe96058c2e5a1d707590cbd72b42279))
+    > Updated metadata handling to use new constants NODE_ID, GRAPH_PATH.
+ > work on #298
+
+ -  **CompileConfig**  add optional grapId method ([ff4218b8745fb26](https://github.com/bsorrentino/langgraph4j/commit/ff4218b8745fb26f8fed03a56602f3d86a1240f0))
+    > work on #298
+
+ -  move out from internal package ([8eb68abfca5559b](https://github.com/bsorrentino/langgraph4j/commit/8eb68abfca5559bd28460a2e24f4c7823e2d0579))
+   
+ -  rename ManagedAsyncNodeActionWithConfig to ManagedAsyncNodeAction ([956ece2a19ae6d4](https://github.com/bsorrentino/langgraph4j/commit/956ece2a19ae6d47e6d640ae962b80c9251dfb3e))
+    > work on #298
+
+ -  rename ManagedAsyncNodeActionWithConfig to ManagedAsyncNodeAction ([a3a1432f5cb4af7](https://github.com/bsorrentino/langgraph4j/commit/a3a1432f5cb4af738aa3b8cc92f1f4f41038bfbe))
+    > work on #298
+
+ -  **core/RunnableConfig**  Simplify metadata check and add current node ID retrieval ([729d2bc17224ac3](https://github.com/bsorrentino/langgraph4j/commit/729d2bc17224ac3a2b07f7594da5e2382c146bbe))
+    > - introduce nodeId() method to retrieve node ID from runnable config metadata.
+ > work on #298
+
+ -  **core**  allow dynamic interrupt method with RunnableConfig support ([ca8b61285d0eae7](https://github.com/bsorrentino/langgraph4j/commit/ca8b61285d0eae7e7ea63df4bd8c8bcc7781f532))
+    > invoke interrupt method passing the  RunnableConfig parameter for interruption decision
+
+ -  **core/InterruptableAction**  Add interrupt method with RunnableConfig support ([006b19798c7927d](https://github.com/bsorrentino/langgraph4j/commit/006b19798c7927d7cf41bc2f44e1d1e32f80c585))
+    > Refactor interrupt method to include RunnableConfig parameter for interruption decision
+
+ -  rename ManagedAsyncNodeActionWithConfig to ManagedAsyncNodeAction ([bc94ce02117aac7](https://github.com/bsorrentino/langgraph4j/commit/bc94ce02117aac7dd1b7b407078b52303a4ee794))
+    > work on #298
+
+ -  **GraphInput**  Add resume(Map) method ([388e0c7857dde76](https://github.com/bsorrentino/langgraph4j/commit/388e0c7857dde761ff69cb319617138a2eed2753))
+    > work on #302
+
+ -  **GraphResume**  refactor GraphResume to include value map ([ea82bb2fd6f01f9](https://github.com/bsorrentino/langgraph4j/commit/ea82bb2fd6f01f922b50d802d63a1b08d3f3c5fc))
+    > Added Map&lt;String,Object&gt; value parameter to record, added constructor with null check and default constructor
+ > work on #302
+
+ -  **GraphArgs**  Add default constructor for GraphArgs ([74afe1a22743f32](https://github.com/bsorrentino/langgraph4j/commit/74afe1a22743f327e3b3b1c90462b49645872317))
+   
+ -  **core**  move currentState inside the AsyncNodeGenerator.Context class ([8b4b1034458a4bb](https://github.com/bsorrentino/langgraph4j/commit/8b4b1034458a4bb05953f4667bfab1164a7d92cc))
+   
+ -  move ManagedAsyncNodeActionWithConfig from package action to internal.node ([04abfb2125a4f90](https://github.com/bsorrentino/langgraph4j/commit/04abfb2125a4f90fa21a31bc5d82e43ad8b63758))
+   
+ -  replace String.format() with String.formatted() method ([634c01a53c61c7b](https://github.com/bsorrentino/langgraph4j/commit/634c01a53c61c7b0bd18e1f55323625c0512e401))
+   
+ -  **SubCompiledGraphNodeAction**  Refactor subgraph config building to use the new runnableConfigBuilderWithSubgraphPath utility ([8a38f96862f40b4](https://github.com/bsorrentino/langgraph4j/commit/8a38f96862f40b40dc5f49d98be1bf93694124d1))
+    > work on #298
+
+ -  **core/TrackGraphNodeHook**  Refactor config builder to handle subgraph paths ([25e0f58726b5494](https://github.com/bsorrentino/langgraph4j/commit/25e0f58726b54949df6914b8a3c990917ae287a5))
+    > Introduced helper method to manage subgraph path metadata in RunnableConfig builder
+ > work on #298
+
+ -  **StateGraph**  Refactor node creation to include tracking hook ([075c17d47c0e603](https://github.com/bsorrentino/langgraph4j/commit/075c17d47c0e60323431ccaca166b271fd982249))
+    > Updated node initialization to register TrackGraphNodeHook for enhanced graph node tracking capabilities
+ > work on #298
+
+
+### ALM 
+
+ -  **javelit**  bump to release 1.7.9 ([f9b6937a2c2fae1](https://github.com/bsorrentino/langgraph4j/commit/f9b6937a2c2fae1a0111a81db5c10a4841a85698))
+   
+ -  bump to release 1.7.9 ([1867ce0ffbf8eb9](https://github.com/bsorrentino/langgraph4j/commit/1867ce0ffbf8eb95f08f7434abe6441156fd16f7))
+   
+ -  Update langchain4j and spring-ai versions ([9cbdd57396c785f](https://github.com/bsorrentino/langgraph4j/commit/9cbdd57396c785f7028c8d2c673b717358663395))
+    > Upgrade langchain4j to 1.10.0, beta to 1.10.0-beta18, and spring-ai to 1.1.2
+
+ -  bump to next dev version 1.7-SNAPSHOT ([0fbe79a2b08d17f](https://github.com/bsorrentino/langgraph4j/commit/0fbe79a2b08d17f7b0bc8c1c235b14748c18b318))
+   
+
+### Test 
+
+ -  **Issue304Test**  Add tests for action proxies and wrappers ([d6f1282b8c4826d](https://github.com/bsorrentino/langgraph4j/commit/d6f1282b8c4826d3d0b29642344ba85908ad9368))
+    > Implement test cases for NodeAction/AsyncNodeAction proxies, InterruptableAction integration, and configuration parameter handling
+ > work on #304
+
+ -  **CancellationTest**  Simplify exception checks using ExceptionUtils ([e73b6f02d804890](https://github.com/bsorrentino/langgraph4j/commit/e73b6f02d804890a395f605c4bb8cdf8efc729e8))
+   
+ -  **GraphTest**  Add test for CompletableFuture exception handling ([fa1dd461a1048a1](https://github.com/bsorrentino/langgraph4j/commit/fa1dd461a1048a174655cdfbd328baba0eb9ac3a))
+   
+ -  **CompiledSubGraphTest**  add unit tests for check correctness of nodeId, graphPath, graphId in RunnableConfig ([d8e27d018710f11](https://github.com/bsorrentino/langgraph4j/commit/d8e27d018710f1105da1653e7c8fc401e2c19594))
+    > work on #298
+
+ -  update to use RunnableCOnfig.nodeId() method ([f163acf13135811](https://github.com/bsorrentino/langgraph4j/commit/f163acf131358114fd58fd442a055687c2d44e01))
+    > work on #298
+
+ -  verify interruption working with new traking id ([43ac5d502962c90](https://github.com/bsorrentino/langgraph4j/commit/43ac5d502962c90306c0fbf998a3bac25bcf7876))
+    > work on #298
+
+ -  unit test usage of resume arguments ([afbe42327fe08ef](https://github.com/bsorrentino/langgraph4j/commit/afbe42327fe08efe81ca79546680787478a55d8d))
+    > work on #302
+
+ -  fix metadata key ([f0604d89eb74a15](https://github.com/bsorrentino/langgraph4j/commit/f0604d89eb74a1583872298c625ddc47a585854a))
+   
+ -  add tests to verify subgraph tracking data correctness ([a5603c9c31645bf](https://github.com/bsorrentino/langgraph4j/commit/a5603c9c31645bf8e1c0c723ac55eb5609a1aa00))
+    > work on #298
+
+ -  **core**  rename from ConfigurationTests to RunnableConfigTest ([3c72d41454cba9c](https://github.com/bsorrentino/langgraph4j/commit/3c72d41454cba9ccbcda83ba2e7595892ac20bf9))
+   
+ -  add unit test for check new metadata ([373eb2f32d8c41d](https://github.com/bsorrentino/langgraph4j/commit/373eb2f32d8c41ddf33523bc9112e2ae87015b77))
+    > work on #298
+
+
+
+
+
+
 <!-- "name: v1.7.8" is a release tag -->
 
 ## [v1.7.8](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.8) (2025-12-20)
