@@ -15,6 +15,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * test for issue <a href="https://github.com/langgraph4j/langgraph4j/issues/260">#260</a>
+ */
 public class Issue260Test {
 
     public static class GraphState extends AgentState {
