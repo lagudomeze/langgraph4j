@@ -3,9 +3,13 @@ package org.bsc.langgraph4j.action;
 import org.bsc.langgraph4j.RunnableConfig;
 import org.bsc.langgraph4j.state.AgentState;
 
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
 
 /**
  * Represents an asynchronous action that can be executed with a configuration.
@@ -30,16 +34,31 @@ public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunct
      * @param syncAction the synchronous action to be converted
      * @return an {@link AsyncNodeActionWithConfig} representation of the given synchronous action
      */
+    @SuppressWarnings("unchecked")
     static <S extends AgentState> AsyncNodeActionWithConfig<S> node_async(NodeActionWithConfig<S> syncAction) {
-        return (t, config ) -> {
-            CompletableFuture<Map<String, Object>> result = new CompletableFuture<>();
+
+        final AsyncNodeActionWithConfig<S> asyncAction = (t, config ) -> {
             try {
-                result.complete(syncAction.apply(t, config));
+                return completedFuture(syncAction.apply(t, config));
             } catch (Throwable e) {
-                result.completeExceptionally(e);
+                return failedFuture(e);
             }
-            return result;
         };
+
+        if( syncAction instanceof InterruptableAction<?> ) {
+            final var proxyInstance = Proxy.newProxyInstance( syncAction.getClass().getClassLoader(),
+                    new Class[] { AsyncNodeActionWithConfig.class, InterruptableAction.class},
+                    (proxy, method, methodArgs) -> {
+                        if( method.getName().equals("interrupt") ) {
+                            return method.invoke(syncAction, methodArgs);
+                        }
+                        return method.invoke(asyncAction, methodArgs);
+                    }
+            );
+            return (AsyncNodeActionWithConfig<S>) proxyInstance;
+        }
+
+        return asyncAction;
     }
 
     /**
@@ -49,8 +68,25 @@ public interface AsyncNodeActionWithConfig<S extends AgentState> extends BiFunct
      * @param <S> the type of the agent state
      * @return an AsyncNodeActionWithConfig that wraps the given AsyncNodeAction
      */
+    @SuppressWarnings("unchecked")
     static <S extends AgentState> AsyncNodeActionWithConfig<S> of(AsyncNodeAction<S> action) {
-        return (t, config) -> action.apply(t);
+        final AsyncNodeActionWithConfig<S> actionWithConfig = (t, config ) ->
+                action.apply(t);
+
+        if( action instanceof InterruptableAction<?> ) {
+            final var proxyInstance = Proxy.newProxyInstance( action.getClass().getClassLoader(),
+                    new Class[] { AsyncNodeActionWithConfig.class, InterruptableAction.class},
+                    (proxy, method, methodArgs) -> {
+                        if( method.getName().equals("interrupt") ) {
+                            return method.invoke(action, methodArgs);
+                        }
+                        return method.invoke(actionWithConfig, methodArgs);
+                    }
+            );
+            return (AsyncNodeActionWithConfig<S>) proxyInstance;
+        }
+
+        return actionWithConfig;
     }
 
 }
