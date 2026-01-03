@@ -816,7 +816,6 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
 
                 if( START.equals(context.currentNodeId()) ) {
                     var nextNodeCommand = getEntryPoint(context.currentState(), config) ;
-                    //nextNodeId = nextNodeCommand.gotoNode();
                     context.setNextNodeId(nextNodeCommand.gotoNode());
                     context.setCurrentState( nextNodeCommand.update() );
 
@@ -827,15 +826,12 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             buildNodeOutput( context.currentNodeId() );
 
                     context.setCurrentNodeId(context.nextNodeId());
-                    //currentNodeId = nextNodeId;
 
                     return Data.of( output );
                 }
 
                 if( END.equals(context.nextNodeId()) ) {
                     context.reset();
-                    //nextNodeId = null;
-                    //currentNodeId = null;
                     return Data.of( buildNodeOutput( END ) );
                 }
 
@@ -868,6 +864,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 newMetadata.put(RunnableConfig.NODE_ID, context.currentNodeId());
                 compileConfig.graphId()
                         .ifPresent( graphId -> {
+                            newMetadata.put(RunnableConfig.GRAPH_ID, graphId);
                             if( this.config.graphPath().isEmpty() ) { // to avoid add graphId in subgraph cases
                                 newMetadata.put(RunnableConfig.GRAPH_PATH, this.config.graphPath().append(graphId) );
                             }
