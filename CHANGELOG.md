@@ -2,6 +2,62 @@
 
 
 
+<!-- "name: v1.7.10" is a release tag -->
+
+## [v1.7.10](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.10) (2026-01-04)
+
+
+
+### Documentation
+
+ -  bump to release 1.7.10 ([93e75ecb6463de6](https://github.com/bsorrentino/langgraph4j/commit/93e75ecb6463de6f956fc1ea2af0ff161c4e5c61))
+
+ -  update changelog ([b5200e3d98963e0](https://github.com/bsorrentino/langgraph4j/commit/b5200e3d98963e03048d12aac787fb7d10adac6c))
+
+
+### Refactor
+
+ -  **SubCompiledGraphNodeAction**  set GRAPH_PATH and conditionally add GRAPH_ID ([e847e548edb0e36](https://github.com/bsorrentino/langgraph4j/commit/e847e548edb0e36d0ab8f94c5634b08deb178f85))
+    > work on #298
+
+ -  **RunnableConfig**  add GRAPH_ID metadata attribute ([5af18ea7040759f](https://github.com/bsorrentino/langgraph4j/commit/5af18ea7040759f289ea2880bb7e7450059929ee))
+    > - Updated metadata retrieval to use new GRAPH_ID constant.
+ > work on #298
+
+ -  **CompiledGraph**  Add graphId metadata ([e6a8be6cfdc55ce](https://github.com/bsorrentino/langgraph4j/commit/e6a8be6cfdc55cece5215b519ba9e9b282d6d2f0))
+    > - added graphId to metadata in compilation configuration
+ > work on #298
+
+ -  **SubCompiledGraphNodeAction**  Use subgraphId instead of nodeId for graph path ([1ae04c53032231c](https://github.com/bsorrentino/langgraph4j/commit/1ae04c53032231cb9ceff2604a60c0906724a66a))
+    > Update metadata to use subgraph&#x27;s graphId if available, defaulting to nodeId
+ > work on #298
+
+ -  **ManagedAsyncNodeAction**  Simplify interruption handling by removing proxy ([9b4ec7cde0a884c](https://github.com/bsorrentino/langgraph4j/commit/9b4ec7cde0a884ce1474594ec6aef0dbf8f64dd6))
+    > Removed nested Interruptable class and proxy mechanism. Now directly call delegate&#x27;s interrupt method when applicable.
+
+
+### ALM 
+
+ -  **javelit**  bump to release 1.7.10 ([577cfd00b375910](https://github.com/bsorrentino/langgraph4j/commit/577cfd00b375910ffae1726ff835155119ee2622))
+   
+ -  bump to release 1.7.10 ([a78928802c6baa4](https://github.com/bsorrentino/langgraph4j/commit/a78928802c6baa4e38b925ebe1b9a43e2f8956ee))
+   
+ -  bump to next dev version 1.7-SNAPSHOT ([49a3359cf9d023c](https://github.com/bsorrentino/langgraph4j/commit/49a3359cf9d023c65b8bfd7e7cf39143a0f47221))
+   
+
+### Test 
+
+ -  verify use subgraphId  in metadata.graphId() and nodeId in metadata.graphPath() ([0910c498300d154](https://github.com/bsorrentino/langgraph4j/commit/0910c498300d1545242250bc92c860081fff4a76))
+    > work on #298
+
+ -  verify use subgraphId instead of nodeId for graph path ([071c93de668948c](https://github.com/bsorrentino/langgraph4j/commit/071c93de668948c5148fef9137541bace97fd6ed))
+    > work on #298
+
+
+
+
+
+
 <!-- "name: v1.7.9" is a release tag -->
 
 ## [v1.7.9](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.9) (2025-12-29)
