@@ -103,7 +103,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 throw StateGraph.Errors.interruptionNodeNotExist.exception(interruption);
             }
         }
-        for (String interruption : processedData.interruptsBefore() ) {
+        for (String interruption : processedData.interruptsAfter() ) {
             if (!processedData.nodes().anyMatchById( interruption )) {
                 throw StateGraph.Errors.interruptionNodeNotExist.exception(interruption);
             }
