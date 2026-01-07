@@ -1,6 +1,7 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.*;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.edge.EdgeCondition;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
@@ -68,6 +69,7 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     final Nodes<State> nodes = new Nodes<>();
     final Edges<State> edges = new Edges<>();
+    final NodeHooks<State> nodeHooks = new NodeHooks<>();
 
     private final Map<String, Channel<?>> channels;
 
@@ -125,6 +127,16 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return unmodifiableMap(channels);
     }
 
+
+    public StateGraph<State> registerNodeHook( NodeHook.WrapCall<State> wrapCallHook ) {
+        nodeHooks.registerWrapCall( wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> registerNodeHook( String nodeId, NodeHook.WrapCall<State> wrapCallHook ) {
+        nodeHooks.registerWrapCall( nodeId, wrapCallHook );
+        return this;
+    }
 
     public StateGraph<State> addNode(String id, Node.ActionFactory<State> actionFactory) throws GraphStateException {
         if (Objects.equals(id, END)) {
