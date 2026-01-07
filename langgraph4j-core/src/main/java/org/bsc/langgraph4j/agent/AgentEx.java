@@ -65,7 +65,7 @@ public interface AgentEx {
         }
 
         @Override
-        public Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state) {
+        public Optional<InterruptionMetadata<State>> interrupt(String nodeId, State state, RunnableConfig config) {
             if( state.value( APPROVAL_RESULT_PROPERTY ).isEmpty() ) {
                 var metadata = interruptionMetadataProvider.apply(nodeId,state);
                 return Optional.of(metadata);
