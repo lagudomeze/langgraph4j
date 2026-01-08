@@ -4,6 +4,7 @@ import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.state.*;
@@ -15,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -630,16 +632,16 @@ public class GraphTest {
     }
 
     @Test
-    public void testHook() throws Exception {
+    public void testHooks() throws Exception {
 
         var workflow = new StateGraph<>(MessagesState.SCHEMA, State::new)
-                .registerNodeHook( ( state, config, action ) -> {
+                .addNodeHook( (state, config, action ) -> {
                     log.info("node {} hooked - start", config.nodeId());
                     return action.apply(state, config)
                             .whenComplete( ( result, exception ) ->
                                 log.info("node {} hooked - end", config.nodeId()));
                 })
-                .registerNodeHook( "node_2",( state, config, action ) -> {
+                .addNodeHook( "node_2",(state, config, action ) -> {
                     log.info("specified node {} hooked - start", config.nodeId());
                     return action.apply(state, config)
                             .thenApply(result -> mergeMap( result, Map.of("hook", "node_2_hooked")))
@@ -663,4 +665,77 @@ public class GraphTest {
         assertIterableEquals( List.of("node_1", "node_2"), state.messages());
 
     }
+
+
+    record NestedHook( String level ) implements NodeHook.WrapCall<State> {
+
+        @Override
+        public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action) {
+            var schema = mergeMap( MessagesState.SCHEMA, Map.of( "hooks", new RegisterHookChannel() ));
+
+            log.info("hook on '{}' level '{}' - start", config.nodeId(), level);
+            return action.apply(state, config)
+//                    .thenApply( result -> {
+//                        return mergeMap( result, Map.of("hooks", Map.of(config.nodeId(), List.of(level))), (oldMap, newMap) -> newMap);
+//                    })
+                    .whenComplete( ( result, exception ) -> {
+                            log.info("hook on '{}' level '{}' - end", config.nodeId(), level);
+                    });
+        }
+    }
+
+    static class RegisterHookChannel implements Channel<Map<String, List<String>>> {
+
+        private final Reducer<Map<String, List<String>>> R = (oldMap, newMap ) -> {
+                if (oldMap == null) return newMap;
+                if (newMap == null) return oldMap;
+
+                return mergeMap( oldMap, newMap, (oldList, newList) -> {
+                    List<String> combinedList = new ArrayList<>(oldList);
+                    combinedList.addAll(newList);
+                    return combinedList;
+                });
+        };
+
+        @Override
+        public Optional<Reducer<Map<String, List<String>>>> getReducer() {
+            return Optional.of( R );
+        }
+
+        @Override
+        public Optional<Supplier<Map<String, List<String>>>> getDefault() {
+            return Optional.of( HashMap::new );
+        }
+    }
+
+    @Test
+    public void testNestedHooks() throws Exception {
+
+        var schema = mergeMap( MessagesState.SCHEMA, Map.of( "hooks", new RegisterHookChannel() ));
+
+        var workflow = new StateGraph<>(schema, State::new)
+                .addNodeHook( new NestedHook("global-1"))
+                .addNodeHook( new NestedHook("global-2"))
+                .addNodeHook( new NestedHook("global-3"))
+                .addNodeHook( "node_4", new NestedHook("node_4-1"))
+                .addNodeHook( "node_4", new NestedHook("node_4-2"))
+                .addNode("node_1", actionBuilder().nodeId("node_1").build() )
+                .addNode("node_2", actionBuilder().nodeId("node_2").build() )
+                .addNode("node_3", actionBuilder().nodeId("node_3").build() )
+                .addNode("node_4", actionBuilder().nodeId("node_4").build() )
+                .addEdge(START, "node_1")
+                .addEdge("node_1", "node_2")
+                .addEdge("node_2", "node_3")
+                .addEdge("node_3", "node_4")
+                .addEdge("node_4", END)
+                .compile();
+
+        var result = workflow.invoke(   GraphInput.args(Map.of("input", "test1")),
+                RunnableConfig.builder().build());
+        assertTrue( result.isPresent() );
+        var state = result.get();
+        assertIterableEquals( List.of("node_1", "node_2", "node_3", "node_4"), state.messages());
+
+    }
+
 }
