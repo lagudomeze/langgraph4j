@@ -1,6 +1,5 @@
 package org.bsc.langgraph4j.state;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Supplier;
 
