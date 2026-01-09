@@ -136,7 +136,7 @@ public class AgentState {
      */
     public static Map<String,Object> updateState( Map<String,Object> state, Map<String,Object> partialState, Map<String, Channel<?>> channels ) {
         Objects.requireNonNull(state, "state cannot be null");
-        if (partialState == null || partialState.isEmpty()) {
+        if (partialState == null || partialState.isEmpty() || state == partialState ) {
             return state;
         }
 
