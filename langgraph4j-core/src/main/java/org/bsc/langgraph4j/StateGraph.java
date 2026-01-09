@@ -128,8 +128,18 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
     }
 
 
-    public StateGraph<State> addNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
+    public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
         nodeHooks.addWrapCall( wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addBeforeCallNodeHook(NodeHook.BeforeCall<State> beforeCallHook ) {
+        nodeHooks.addBeforeCall( beforeCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addAfterCallNodeHook(NodeHook.AfterCall<State> afterCallHook ) {
+        nodeHooks.addAfterCall( afterCallHook );
         return this;
     }
 
