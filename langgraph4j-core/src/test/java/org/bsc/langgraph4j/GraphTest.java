@@ -634,13 +634,13 @@ public class GraphTest {
     @Test
     public void tesNestedWrapCallHooksThatNotPropagateResult() throws Exception {
         final Map<String,Channel<?>> schema =
-                mergeMap( MessagesState.SCHEMA, Map.of( "hook-global", Channels.appenderWithDuplicate(ArrayList::new) ));
+                mergeMap( MessagesState.SCHEMA, Map.of( "hook-global", Channels.appender(ArrayList::new) ));
 
         final NodeHook.WrapCall<State> wrapCallHook = (state, config, action ) -> {
             log.info("hook on '{}' - start", config.nodeId());
             return action.apply(state, config)
                     .thenApply(result ->
-                            mergeMap( result, Map.of("hook-global", "hook-%s".formatted(config.nodeId())), (oldValue, newValue) -> newValue))
+                            AgentState.updateState( result, Map.of("hook-global", "hook-%s".formatted(config.nodeId())), schema ))
                     .whenComplete( ( result, exception ) ->
                             log.info("hook on '{}' - end", config.nodeId()));
         };
@@ -667,13 +667,19 @@ public class GraphTest {
 
     }
 
-    record NestedHook( String level ) implements NodeHook.WrapCall<State>, NodeHook.BeforeCall<State>, NodeHook.AfterCall<State> {
+    record NestedHook( String level, Map<String,Channel<?>> schema ) implements NodeHook.WrapCall<State>, NodeHook.BeforeCall<State>, NodeHook.AfterCall<State> {
 
+        public NestedHook( String level ) {
+            this( level, null);
+        }
         @Override
         public CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action) {
 
             log.info("hook on '{}' level '{}' - start", config.nodeId(), level);
             return action.apply(state, config)
+                    .thenApply(result -> (schema!=null) ?
+                            AgentState.updateState( result, Map.of("hooks", Map.of( config.nodeId(), List.of(level))), schema ) :
+                            result )
                     .whenComplete( ( result, exception ) -> {
                             log.info("hook on '{}' level '{}' - end", config.nodeId(), level);
                     });
@@ -719,7 +725,7 @@ public class GraphTest {
         final Map<String,Channel<?>> schema = mergeMap( MessagesState.SCHEMA, Map.of( "hooks", new RegisterHookChannel() ));
 
         var workflow = new StateGraph<>(schema, State::new)
-                .addWrapCallNodeHook( new NestedHook("wrap-global-1"))
+                .addWrapCallNodeHook( new NestedHook("wrap-global-1", schema))
                 .addBeforeCallNodeHook( new NestedHook("before-global-1"))
                 .addBeforeCallNodeHook( new NestedHook("before-global-2"))
                 .addAfterCallNodeHook( new NestedHook("after-global-1"))
@@ -744,7 +750,7 @@ public class GraphTest {
         @SuppressWarnings("unchecked")
         var hooksValueMap = (Map<String, List<String>>)state.value("hooks").get();
         assertTrue( hooksValueMap.containsKey("node_1") );
-            assertIterableEquals( List.of( "before-global-2", "before-global-1"),  hooksValueMap.get("node_1") );
+            assertIterableEquals( List.of( "before-global-2", "before-global-1", "wrap-global-1"),  hooksValueMap.get("node_1") );
 
     }
 
@@ -755,8 +761,8 @@ public class GraphTest {
 
         var action = actionBuilder().nodeId("node_1").build().apply(CompileConfig.builder().build());
 
-        var hook1 = new NestedHook("level1");
-        var hook2 = new NestedHook("level2");
+        var hook1 = new NestedHook("level1", schema);
+        var hook2 = new NestedHook("level2", schema);
 
 
         var state = new State(Map.of());
@@ -764,14 +770,14 @@ public class GraphTest {
 
         var hooks = new NodeHooks<State>();
 
-        hooks.addBeforeCall( hook1 );
-        hooks.addBeforeCall( hook2 );
-        hooks.addWrapCall( hook1 );
-        hooks.addWrapCall( hook2 );
-        hooks.addAfterCall( hook1 );
-        hooks.addAfterCall( hook2 );
+        hooks.beforeCalls.add( hook1 );
+        hooks.beforeCalls.add( hook2 );
+        hooks.wrapCalls.add( hook1 );
+        hooks.wrapCalls.add( hook2 );
+        hooks.afterCalls.add( hook1 );
+        hooks.afterCalls.add( hook2 );
 
-        var beforeCallResult = hooks.applyBeforeCall( state, config, State::new, schema  ).join();
+        var beforeCallResult = hooks.beforeCalls.apply( state, config, State::new, schema  ).join();
 
         assertNotNull( beforeCallResult );
         assertEquals( 1, beforeCallResult.size() );
@@ -782,9 +788,20 @@ public class GraphTest {
         assertTrue( hooksValueMap.containsKey("node_1"));
         assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get("node_1") );
 
-        var afterCallResult = hooks.applyAfterCall( state, config, Map.of() ).join();
+        var afterCallResult = hooks.afterCalls.apply( state, config, Map.of() ).join();
+
         assertTrue( afterCallResult.isEmpty() );
 
+        var wrapCallResult = hooks.wrapCalls.apply( state, config, action ).join();
 
+        assertFalse( wrapCallResult.isEmpty() );
+        assertEquals( 2, wrapCallResult.size() );
+        assertTrue( wrapCallResult.containsKey("messages"));
+        assertTrue( wrapCallResult.containsKey("hooks"));
+        hooksValue = beforeCallResult.get("hooks");
+        assertInstanceOf( Map.class,  hooksValue );
+        hooksValueMap = (Map<String,Object>)beforeCallResult.get("hooks");
+        assertTrue( hooksValueMap.containsKey("node_1"));
+        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get("node_1") );
     }
 }
