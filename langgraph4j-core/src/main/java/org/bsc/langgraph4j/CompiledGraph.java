@@ -9,6 +9,7 @@ import org.bsc.langgraph4j.internal.edge.EdgeValue;
 import org.bsc.langgraph4j.internal.node.ParallelNode;
 import org.bsc.langgraph4j.action.SubCompiledGraphNodeAction;
 import org.bsc.langgraph4j.state.AgentState;
+import org.bsc.langgraph4j.state.AgentStateFactory;
 import org.bsc.langgraph4j.state.StateSnapshot;
 import org.bsc.langgraph4j.utils.TryFunction;
 import org.bsc.langgraph4j.utils.TypeRef;
@@ -744,16 +745,11 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                           RunnableConfig runnableConfig ) throws ExecutionException, InterruptedException
         {
             //return action.apply( clonedState, runnableConfig)
-            final var stateFactory = stateGraph.getStateFactory();
-            final var schema = stateGraph.getChannels();
-            return stateGraph.nodeHooks.applyBeforeCall( clonedState, runnableConfig, stateFactory, schema )
-                .thenApply( processedResult -> {
-                    var newStateData = AgentState.updateState(context.currentState(), processedResult, schema);
-                    context.setCurrentState( newStateData );
-                    return stateFactory.apply(newStateData);
-                })
-                .thenCompose( newState -> stateGraph.nodeHooks.applyWrapCall( action, newState, runnableConfig, schema )
-                    .thenCompose( partial -> stateGraph.nodeHooks.applyAfterCall(newState, runnableConfig, partial) ))
+            final AgentStateFactory<State> stateFactory = ( data ) -> {
+                context.setCurrentState( data );
+                return stateGraph.getStateFactory().apply( data);
+            };
+            return stateGraph.nodeHooks.applyActionWithHooks( action, clonedState, runnableConfig, stateFactory, stateGraph.getChannels() )
                 .thenApply(TryFunction.Try(partial -> {
 
                         Optional<Data<Output>> embed = getEmbedGenerator( action, partial);
