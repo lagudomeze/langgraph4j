@@ -10,15 +10,15 @@ import java.util.concurrent.CompletableFuture;
 public interface NodeHook {
 
     interface BeforeCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> accept(State state, RunnableConfig config );
+        CompletableFuture<Map<String, Object>> applyBefore(State state, RunnableConfig config );
     }
 
     interface AfterCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> accept(State state, RunnableConfig config, Map<String, Object> result ) ;
+        CompletableFuture<Map<String, Object>> applyAfter(State state, RunnableConfig config, Map<String, Object> lastResult ) ;
     }
 
     interface WrapCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> apply(State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action);
+        CompletableFuture<Map<String, Object>> applyWrap(State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action);
     }
 
 
