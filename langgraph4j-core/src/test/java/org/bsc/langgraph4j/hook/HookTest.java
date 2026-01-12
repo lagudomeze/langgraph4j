@@ -94,11 +94,11 @@ public class HookTest implements Logging {
     }
 
     static class EdgeActionBuilder {
-        String nodeId;
+        String sourceId;
         String target;
 
-        public EdgeActionBuilder nodeId( String nodeId ) {
-            this.nodeId = nodeId;
+        public EdgeActionBuilder sourceId(String nodeId ) {
+            this.sourceId = nodeId;
             return this;
         }
 
@@ -108,10 +108,10 @@ public class HookTest implements Logging {
         }
 
         public AsyncCommandAction<State> build() {
-            assertNotNull( nodeId, "nodeId cannot be null" );
+            assertNotNull(sourceId, "nodeId cannot be null" );
             assertNotNull( target, "nodeId cannot be null" );
             return (state,config) -> {
-                assertEquals(nodeId, config.nodeId());
+                assertEquals(sourceId, config.nodeId());
                 return completedFuture(new Command( target ));
             };
         }
@@ -133,6 +133,8 @@ public class HookTest implements Logging {
                 Map.of( NestedNodeHook.HOOKS_ATTRIBUTE, new RegisterHookChannel(),
                         NestedNodeHook.AFTER_CALL_ATTRIBUTE, new SumValueChannel() ));
 
+        final var sourceId = "node_1";
+
         var action = NodeActionBuilder.of().nodeId("node_1").buildAction(CompileConfig.builder().build());
 
         var hook1 = new NestedNodeHook<State>("level1", schema);
@@ -140,7 +142,8 @@ public class HookTest implements Logging {
         
         var state = stateFactory().apply(Map.of());
 
-        var config = RunnableConfig.builder().putMetadata(RunnableConfig.NODE_ID, "node_1").build();
+        final var nodeId = "node_1";
+        var config = RunnableConfig.builder().putMetadata(RunnableConfig.NODE_ID, nodeId).build();
 
         var hooks = new NodeHooks<State>();
 
@@ -151,7 +154,7 @@ public class HookTest implements Logging {
         hooks.afterCalls.add( hook1 );
         hooks.afterCalls.add( hook2 );
 
-        var beforeCallResult = hooks.beforeCalls.apply( state, config, State::new, schema  ).join();
+        var beforeCallResult = hooks.beforeCalls.apply( nodeId, state, config, State::new, schema  ).join();
 
         assertNotNull( beforeCallResult );
         assertEquals( 1, beforeCallResult.size() );
@@ -159,16 +162,16 @@ public class HookTest implements Logging {
         var hooksValue = beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);
         assertInstanceOf( Map.class,  hooksValue );
         var hooksValueMap = (Map<String,Object>)beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);
-        assertTrue( hooksValueMap.containsKey("node_1"));
-        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get("node_1") );
+        assertTrue( hooksValueMap.containsKey(nodeId));
+        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get(nodeId) );
 
-        var afterCallResult = hooks.afterCalls.apply( state, config, Map.of() ).join();
+        var afterCallResult = hooks.afterCalls.apply( nodeId, state, config, Map.of() ).join();
         assertFalse( afterCallResult.isEmpty() );
         assertTrue( afterCallResult.containsKey(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
         assertInstanceOf( Integer.class, afterCallResult.get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
         assertEquals( 2, afterCallResult.get(NestedNodeHook.AFTER_CALL_ATTRIBUTE) );
 
-        var wrapCallResult = hooks.wrapCalls.apply( state, config, action ).join();
+        var wrapCallResult = hooks.wrapCalls.apply( nodeId, state, config, action ).join();
 
         assertFalse( wrapCallResult.isEmpty() );
         assertEquals( 2, wrapCallResult.size() );
@@ -177,8 +180,8 @@ public class HookTest implements Logging {
         hooksValue = beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);
         assertInstanceOf( Map.class,  hooksValue );
         hooksValueMap = (Map<String,Object>)beforeCallResult.get(NestedNodeHook.HOOKS_ATTRIBUTE);
-        assertTrue( hooksValueMap.containsKey("node_1"));
-        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get("node_1") );
+        assertTrue( hooksValueMap.containsKey(nodeId));
+        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get(nodeId) );
     }
 
     @Test
@@ -188,8 +191,9 @@ public class HookTest implements Logging {
                 Map.of( NestedEdgeHook.HOOKS_ATTRIBUTE, new RegisterHookChannel(),
                         NestedEdgeHook.AFTER_CALL_ATTRIBUTE, new SumValueChannel() ));
 
+        final var sourceId = "node_1";
         var action = EdgeActionBuilder.of()
-                        .nodeId("node_1")
+                        .sourceId(sourceId)
                         .target( StateGraph.END)
                         .build();
 
@@ -198,7 +202,7 @@ public class HookTest implements Logging {
 
         var state = stateFactory().apply(Map.of());
 
-        var config = RunnableConfig.builder().putMetadata(RunnableConfig.NODE_ID, "node_1").build();
+        var config = RunnableConfig.builder().build();
 
         var hooks = new EdgeHooks<State>();
 
@@ -209,7 +213,7 @@ public class HookTest implements Logging {
         hooks.afterCalls.add( hook1 );
         hooks.afterCalls.add( hook2 );
 
-        var beforeCallResult = hooks.beforeCalls.apply( state, config, State::new, schema  ).join();
+        var beforeCallResult = hooks.beforeCalls.apply( sourceId, state, config, State::new, schema  ).join();
 
         assertNotNull( beforeCallResult );
         assertEquals( 1, beforeCallResult.size() );
@@ -217,16 +221,16 @@ public class HookTest implements Logging {
         var hooksValue = beforeCallResult.get(NestedEdgeHook.HOOKS_ATTRIBUTE);
         assertInstanceOf( Map.class,  hooksValue );
         var hooksValueMap = (Map<String,Object>)beforeCallResult.get(NestedEdgeHook.HOOKS_ATTRIBUTE);
-        assertTrue( hooksValueMap.containsKey("node_1"));
-        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get("node_1") );
+        assertTrue( hooksValueMap.containsKey(sourceId));
+        assertIterableEquals( List.of( "level2", "level1"),  (Iterable<?>) hooksValueMap.get(sourceId) );
 
-        var afterCallResult = hooks.afterCalls.apply( state, config, new Command( StateGraph.END )).join();
+        var afterCallResult = hooks.afterCalls.apply( sourceId, state, config, new Command( StateGraph.END )).join();
         assertFalse( afterCallResult.update().isEmpty() );
         assertTrue( afterCallResult.update().containsKey(NestedEdgeHook.AFTER_CALL_ATTRIBUTE) );
         assertInstanceOf( Integer.class, afterCallResult.update().get(NestedEdgeHook.AFTER_CALL_ATTRIBUTE) );
         assertEquals( 2, afterCallResult.update().get(NestedEdgeHook.AFTER_CALL_ATTRIBUTE) );
 
-        var wrapCallResult = hooks.wrapCalls.apply( state, config, action ).join();
+        var wrapCallResult = hooks.wrapCalls.apply( sourceId, state, config, action ).join();
 
         assertFalse( wrapCallResult.update().isEmpty() );
         assertEquals( 1, wrapCallResult.update().size() );
