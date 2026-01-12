@@ -9,16 +9,19 @@ import java.util.concurrent.CompletableFuture;
 
 public interface NodeHook {
 
+    @FunctionalInterface
     interface BeforeCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> applyBefore(State state, RunnableConfig config );
+        CompletableFuture<Map<String, Object>> applyBefore(String nodeId, State state, RunnableConfig config );
     }
 
+    @FunctionalInterface
     interface AfterCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> applyAfter(State state, RunnableConfig config, Map<String, Object> lastResult ) ;
+        CompletableFuture<Map<String, Object>> applyAfter(String nodeId, State state, RunnableConfig config, Map<String, Object> lastResult ) ;
     }
 
+    @FunctionalInterface
     interface WrapCall<State extends AgentState> {
-        CompletableFuture<Map<String, Object>> applyWrap(State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action);
+        CompletableFuture<Map<String, Object>> applyWrap(String nodeId, State state, RunnableConfig config, AsyncNodeActionWithConfig<State> action);
     }
 
 
