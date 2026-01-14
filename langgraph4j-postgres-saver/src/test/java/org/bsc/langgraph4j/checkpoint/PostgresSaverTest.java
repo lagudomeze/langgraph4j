@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategyTarget;
 
+import javax.sql.DataSource;
+
+import static java.util.Objects.requireNonNull;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
@@ -105,6 +109,21 @@ public class PostgresSaverTest {
                 ;
     }
 
+    PostgresSaver.Builder buildPostgresSaverWithExistedDatasource() throws SQLException {
+        // Simulate a existed datasource
+        // Maybe a existed bean in your project
+        var ds = new PGSimpleDataSource();
+        ds.setDatabaseName(DATABASE_NAME);
+        ds.setUser(postgres.getUsername());
+        ds.setPassword(postgres.getPassword());
+        ds.setPortNumbers( new int[]{postgres.getFirstMappedPort()} );
+        ds.setServerNames( new String[] { postgres.getHost() } );
+
+        return PostgresSaver.builder()
+                .datasource(ds)
+                .stateSerializer(new ObjectStreamStateSerializer<>( AgentState::new ) );
+    }
+
     @Test
     public void testCheckpointWithReleasedThread() throws Exception {
 
@@ -146,7 +165,7 @@ public class PostgresSaverTest {
 
     @Test
     public void testCheckpointWithNotReleasedThread() throws Exception {
-        var saver = buildPostgresSaver()
+        var saver = buildPostgresSaverWithExistedDatasource()
                         .dropTablesFirst(true)
                         .build();
 

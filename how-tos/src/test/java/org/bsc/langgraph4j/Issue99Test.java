@@ -228,7 +228,7 @@ public class Issue99Test {
 
         result = evaluateWithConfig( graph,
                 CompileConfig.builder()
-                        .interruptAfter("work")
+                        .interruptAfter( SubGraphNode.formatId("subAgent1","work") )
                         .build() );
         assertEquals( "work1",result.state().data().get("step") );
         assertEquals( intentRecognizeNode.getIntent() ,result.state().intent().orElseThrow() );
@@ -237,7 +237,7 @@ public class Issue99Test {
         intentRecognizeNode.setIntent("query");
         result = evaluateWithConfig( graph,
                 CompileConfig.builder()
-                        .interruptAfter("work")
+                        .interruptAfter( SubGraphNode.formatId("subAgent1","work") )
                         .build() );
         assertEquals( "work2",result.state().data().get("step") );
         assertEquals( intentRecognizeNode.getIntent() ,result.state().intent().orElseThrow() );

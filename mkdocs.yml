@@ -29,6 +29,7 @@ nav:
     #   - JavaDoc: apidocs/index.html
     - Tutorial:
       - Core Library: core/core-library.md
+      - Hooks: core/hooks.md      
       - Parallel Branch: core/parallel-branch.md
       - Streaming: core/streaming.md
       - Subgraphs: core/subgraph.md
@@ -48,6 +49,7 @@ nav:
       - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
       - Parallel Branch: how-tos/parallel-branch.ipynb
       - PlantUML: how-tos/plantuml.ipynb
+      - Hooks: how-tos/hooks.ipynb
     - Integrations: 
       - integrations/spring-ai.md
       - integrations/langchain4j.md      
@@ -71,5 +73,6 @@ nav:
       - Langchain4j LLM Streaming: how-tos/llm-streaming.ipynb
       - Parallel Branch: how-tos/parallel-branch.ipynb
       - PlantUML: how-tos/plantuml.ipynb
+      - Hooks: how-tos/hooks.ipynb
   - References: references.md
   - JavaDoc: apidocs/index.html

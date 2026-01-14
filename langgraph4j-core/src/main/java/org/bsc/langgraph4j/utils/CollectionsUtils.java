@@ -31,11 +31,11 @@ public final class CollectionsUtils {
         return map.entrySet().stream()
                 .map( entry -> {
                     if( entry.getValue() instanceof Collection<?> elements ) {
-                        return String.format("%s=%s", entry.getKey(), toString(elements));
+                        return "%s=%s".formatted( entry.getKey(), toString(elements));
                     }
                     return Objects.toString(entry);
                 })
-                .collect(Collectors.joining("\n\t", "{\n\t", "\n\t}") );
+                .collect(Collectors.joining("\n\t", "{\n\t", "\n}") );
 
     }
 

@@ -10,10 +10,8 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a checkpoint of an agent state.
- *
  * The checkpoint is an immutable object that holds an {@link AgentState}
  * and a {@code String} that represents the next state.
- *
  * The checkpoint is serializable and can be persisted and restored.
  *
  * @see AgentState
@@ -101,11 +99,16 @@ public class Checkpoint {
     }
 
     public Checkpoint updateState(Map<String,Object> values, Map<String, Channel<?>> channels ) {
+        return updateState( values, channels, this.nextNodeId );
+    }
+
+
+    public Checkpoint updateState(Map<String,Object> values, Map<String, Channel<?>> channels, String nextNodeId ) {
 
         return new Checkpoint( this.id,
                 AgentState.updateState( this.state, values, channels ),
                 this.nodeId,
-                this.nextNodeId );
+                requireNonNull(nextNodeId, "nextNodeId cannot be null") );
     }
 
     @Override

@@ -4,6 +4,8 @@ import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.AsyncCommandAction;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.action.Command;
+import org.bsc.langgraph4j.hook.*;
+import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.state.*;
 import org.bsc.langgraph4j.utils.EdgeMappings;
@@ -19,16 +21,17 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
+import static org.bsc.langgraph4j.action.AsyncCommandAction.command_async;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 import static org.bsc.langgraph4j.action.AsyncNodeActionWithConfig.node_async;
 import static org.bsc.langgraph4j.state.AgentState.MARK_FOR_REMOVAL;
+import static org.bsc.langgraph4j.utils.CollectionsUtils.mergeMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit test for simple App.
  */
-public class GraphTest {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GraphTest.class);
+public class GraphTest implements Logging {
 
     static class State extends MessagesState<String> {
 
@@ -41,6 +44,50 @@ public class GraphTest {
         }
 
     }
+
+    static class NodeActionBuilder {
+        String nodeId;
+        GraphPath basePath;
+
+        public NodeActionBuilder nodeId(String nodeId ) {
+            this.nodeId = nodeId;
+            return this;
+        }
+        public NodeActionBuilder path(GraphPath path ) {
+            this.basePath = path;
+            return this;
+        }
+
+        public Node.ActionFactory<State> build() {
+            assertNotNull( nodeId );
+            return ( CompileConfig compileConfig ) ->
+
+                (state,config) -> {
+
+                    assertEquals(nodeId, config.nodeId());
+
+                    if( basePath != null ) {
+                        log.info("graphPath: {}", config.graphPath());
+                        assertEquals( basePath, config.graphPath() );
+                    }
+
+                    if(  compileConfig.graphId().isPresent() ) {
+                        log.info("graphId: {} config.graphId: {}", compileConfig.graphId().get(), config.graphId().orElse("<NONE>>"));
+                        assertTrue( config.graphId().isPresent() );
+                        assertEquals(compileConfig.graphId().get(), config.graphId().get() );
+                    }
+
+                    return completedFuture( Map.of("messages", nodeId ));
+
+                };
+
+        }
+    }
+
+    private NodeActionBuilder actionBuilder() {
+        return new NodeActionBuilder();
+    }
+
 
     public static <T> List<Map.Entry<String, T>> sortMap(Map<String, T> map) {
         return map.entrySet().stream()
@@ -583,5 +630,94 @@ public class GraphTest {
 
     }
 
+    @Test
+    public void testNestedNodeWrapHooks() throws Exception {
+        final Map<String,Channel<?>> schema = mergeMap( MessagesState.SCHEMA,
+                Map.of( NestedNodeHook.HOOKS_ATTRIBUTE, new RegisterHookChannel() ));
+
+        var workflow = new StateGraph<>(schema, State::new)
+                .addWrapCallNodeHook( new NestedNodeHook<>("wrap-global-1", schema))
+                .addBeforeCallNodeHook( new NestedNodeHook<>("before-global-1"))
+                .addBeforeCallNodeHook( new NestedNodeHook<>("before-global-2"))
+                .addAfterCallNodeHook( new NestedNodeHook<>("after-global-1"))
+                .addNode("node_1", actionBuilder().nodeId("node_1").build() )
+                .addNode("node_2", actionBuilder().nodeId("node_2").build() )
+                .addNode("node_3", actionBuilder().nodeId("node_3").build() )
+                .addNode("node_4", actionBuilder().nodeId("node_4").build() )
+                .addEdge(START, "node_1")
+                .addEdge("node_1", "node_2")
+                .addEdge("node_2", "node_3")
+                .addEdge("node_3", "node_4")
+                .addEdge("node_4", END)
+                .compile();
+
+        var result = workflow.invoke(   GraphInput.args(Map.of("input", "test1")),
+                RunnableConfig.builder().build());
+        assertTrue( result.isPresent() );
+        var state = result.get();
+        assertIterableEquals( List.of("node_1", "node_2", "node_3", "node_4"), state.messages());
+        assertTrue( state.value(NestedNodeHook.HOOKS_ATTRIBUTE).isPresent());
+        assertInstanceOf( Map.class,  state.value(NestedNodeHook.HOOKS_ATTRIBUTE).get() );
+        @SuppressWarnings("unchecked")
+        var hooksValueMap = (Map<String, List<String>>)state.value(NestedNodeHook.HOOKS_ATTRIBUTE).get();
+        assertTrue( hooksValueMap.containsKey("node_1") );
+        final var traceList = List.of( "before-global-2", "before-global-1", "wrap-global-1");
+        assertIterableEquals( traceList,  hooksValueMap.get("node_1") );
+        assertIterableEquals( traceList,  hooksValueMap.get("node_2") );
+        assertIterableEquals( traceList,  hooksValueMap.get("node_3") );
+        assertIterableEquals( traceList,  hooksValueMap.get("node_4") );
+
+    }
+
+    @Test
+    public void testNestedNodeAndEdgeWrapHooks() throws Exception {
+        final Map<String,Channel<?>> schema = mergeMap( MessagesState.SCHEMA,
+                Map.of( NestedNodeHook.HOOKS_ATTRIBUTE, new RegisterHookChannel(),
+                        NestedEdgeHook.HOOKS_ATTRIBUTE, new RegisterHookChannel() ));
+
+        EdgeHook.AfterCall<State> afterEdgeHookGoToEnd = ( sourceId, s, c, lastResult ) -> {
+            assertEquals( sourceId, c.nodeId());
+            return completedFuture(new Command(END, lastResult.update()));
+        };
+
+        var workflow = new StateGraph<>(schema, State::new)
+                .addWrapCallNodeHook( new NestedNodeHook<>("wrap-global-1", schema))
+                .addBeforeCallNodeHook( new NestedNodeHook<>("before-global-1"))
+                .addBeforeCallNodeHook( new NestedNodeHook<>("before-global-2"))
+                .addAfterCallNodeHook( new NestedNodeHook<>("after-global-1"))
+                .addAfterCallEdgeHook( "node_2", afterEdgeHookGoToEnd )
+                .addNode("node_1", actionBuilder().nodeId("node_1").build() )
+                .addNode("node_2", actionBuilder().nodeId("node_2").build() )
+                .addNode("node_3", actionBuilder().nodeId("node_3").build() )
+                .addNode("node_4", actionBuilder().nodeId("node_4").build() )
+                .addEdge(START, "node_1")
+                .addEdge("node_1", "node_2")
+                .addConditionalEdges("node_2",
+                        command_async( ( s, c ) -> new Command("node_3")),
+                        EdgeMappings.builder()
+                                .to("node_3")
+                                .toEND()
+                                .build())
+                .addEdge("node_3", "node_4")
+                .addEdge("node_4", END)
+                .compile();
+
+        var result = workflow.invoke(   GraphInput.args(Map.of("input", "test1")),
+                RunnableConfig.builder().build());
+        assertTrue( result.isPresent() );
+        var state = result.get();
+        assertIterableEquals( List.of("node_1", "node_2"), state.messages());
+        assertTrue( state.value(NestedNodeHook.HOOKS_ATTRIBUTE).isPresent());
+        assertInstanceOf( Map.class,  state.value(NestedNodeHook.HOOKS_ATTRIBUTE).get() );
+        @SuppressWarnings("unchecked")
+        var hooksValueMap = (Map<String, List<String>>)state.value(NestedNodeHook.HOOKS_ATTRIBUTE).get();
+        assertTrue( hooksValueMap.containsKey("node_1") );
+        final var traceList = List.of( "before-global-2", "before-global-1", "wrap-global-1");
+        assertIterableEquals( traceList,  hooksValueMap.get("node_1") );
+        assertIterableEquals( traceList,  hooksValueMap.get("node_2") );
+        assertNull( hooksValueMap.get("node_3") );
+        assertNull( hooksValueMap.get("node_4") );
+
+    }
 
 }

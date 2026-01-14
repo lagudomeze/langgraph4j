@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Build sites and stage results
-mvn site:site site:stage -T1
+mvn site:site site:stage -T1 -o
+# Build sites and stage results (run locally)
+#mvn site:site site:stage -T1 -o -fn
+
 # Run site staging 
 # mvn -B site:run -DworkingDirectory=target/staging
 

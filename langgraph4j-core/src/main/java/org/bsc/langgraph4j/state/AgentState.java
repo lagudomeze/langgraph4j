@@ -136,7 +136,7 @@ public class AgentState {
      */
     public static Map<String,Object> updateState( Map<String,Object> state, Map<String,Object> partialState, Map<String, Channel<?>> channels ) {
         Objects.requireNonNull(state, "state cannot be null");
-        if (partialState == null || partialState.isEmpty()) {
+        if (partialState == null || partialState.isEmpty() || state == partialState ) {
             return state;
         }
 
@@ -160,7 +160,6 @@ public class AgentState {
         return updateState(state.data(), partialState, channels);
     }
 
-
     /**
      * Returns the value associated with the specified key or a default value if the key is not present.
      *
@@ -172,7 +171,6 @@ public class AgentState {
      */
     @Deprecated(forRemoval = true)
     public final <T> T value(String key, T defaultValue ) { return this.<T>value(key).orElse(defaultValue);}
-
 
     /**
      * Returns the value associated with the given key or a default value if no such key exists.

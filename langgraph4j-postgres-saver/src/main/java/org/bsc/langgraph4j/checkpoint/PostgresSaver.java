@@ -444,6 +444,11 @@ public class PostgresSaver extends MemorySaver {
             return this;
         }
 
+        public Builder datasource(DataSource datasource){
+            this.datasource = datasource;
+            return this;
+        }
+
         public Builder createTables(boolean createTables) {
             this.createTables = createTables;
             return this;
@@ -463,19 +468,23 @@ public class PostgresSaver extends MemorySaver {
 
         public PostgresSaver build() throws SQLException {
             requireNonNull( stateSerializer, "stateSerializer cannot be null");
-            if( port <=0 ) {
-                throw new IllegalArgumentException("port must be greater than 0");
+
+            // Create datasource individually
+            if (datasource == null) {
+                if( port <=0 ) {
+                    throw new IllegalArgumentException("port must be greater than 0");
+                }
+                var ds = new PGSimpleDataSource();
+                ds.setDatabaseName( requireNotBlank(database, "database"));
+                ds.setUser(requireNotBlank(user, "user"));
+                ds.setPassword(requireNonNull(password, "password cannot be null"));
+                ds.setPortNumbers( new int[] {port} );
+                ds.setServerNames( new String[] { requireNotBlank(host, "host") } );
+                datasource = ds;
             }
-            var ds = new PGSimpleDataSource();
-            ds.setDatabaseName( requireNotBlank(database, "database"));
-            ds.setUser(requireNotBlank(user, "user"));
-            ds.setPassword(requireNonNull(password, "password cannot be null"));
-            ds.setPortNumbers( new int[] {port} );
-            ds.setServerNames( new String[] { requireNotBlank(host, "host") } );
 
-            datasource = ds;
+            // Or use the shared datasource
             createTables = createTables || dropTablesFirst;
-
             return new PostgresSaver( this );
         }
     }

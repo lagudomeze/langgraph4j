@@ -1,9 +1,13 @@
 package org.bsc.langgraph4j;
 
 import org.bsc.langgraph4j.action.*;
+import org.bsc.langgraph4j.hook.EdgeHook;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.internal.edge.Edge;
 import org.bsc.langgraph4j.internal.edge.EdgeCondition;
 import org.bsc.langgraph4j.internal.edge.EdgeValue;
+import org.bsc.langgraph4j.internal.hook.EdgeHooks;
+import org.bsc.langgraph4j.internal.hook.NodeHooks;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.internal.node.SubCompiledGraphNode;
 import org.bsc.langgraph4j.internal.node.SubStateGraphNode;
@@ -46,7 +50,8 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         duplicateEdgeTargetError("edge [%s] has duplicate targets %s!"),
         unsupportedConditionalEdgeOnParallelNode("parallel node doesn't support conditional branch, but on [%s] a conditional branch on %s have been found!"),
         illegalMultipleTargetsOnParallelNode("parallel node [%s] must have only one target, but %s have been found!"),
-        interruptionNodeNotExist( "node '%s' configured as interruption doesn't exist!")
+        interruptionNodeNotExist( "node '%s' configured as interruption doesn't exist!"),
+        validationError( "validation error: %s")
         ;
 
         private final String errorMessage;
@@ -68,6 +73,8 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
 
     final Nodes<State> nodes = new Nodes<>();
     final Edges<State> edges = new Edges<>();
+    final NodeHooks<State> nodeHooks = new NodeHooks<>();
+    final EdgeHooks<State> edgeHooks = new EdgeHooks<>();
 
     private final Map<String, Channel<?>> channels;
 
@@ -101,7 +108,6 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
      */
     public StateGraph(AgentStateFactory<State> stateFactory) {
         this( Map.of(), stateFactory);
-
     }
 
     /**
@@ -125,6 +131,66 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
         return unmodifiableMap(channels);
     }
 
+
+    public StateGraph<State> addWrapCallNodeHook(NodeHook.WrapCall<State> wrapCallHook ) {
+        nodeHooks.wrapCalls.add( wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addWrapCallNodeHook( String nodeId, NodeHook.WrapCall<State> wrapCallHook ) {
+        nodeHooks.wrapCalls.add( nodeId, wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addBeforeCallNodeHook(NodeHook.BeforeCall<State> beforeCallHook ) {
+        nodeHooks.beforeCalls.add( beforeCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addBeforeCallNodeHook( String nodeId, NodeHook.BeforeCall<State> beforeCallHook ) {
+        nodeHooks.beforeCalls.add( nodeId, beforeCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addAfterCallNodeHook(NodeHook.AfterCall<State> afterCallHook ) {
+        nodeHooks.afterCalls.add( afterCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addAfterCallNodeHook( String nodeId, NodeHook.AfterCall<State> afterCallHook ) {
+        nodeHooks.afterCalls.add( nodeId, afterCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addWrapCallEdgeHook(EdgeHook.WrapCall<State> wrapCallHook ) {
+        edgeHooks.wrapCalls.add( wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addWrapCallEdgeHook( String nodeId, EdgeHook.WrapCall<State> wrapCallHook ) {
+        edgeHooks.wrapCalls.add( nodeId, wrapCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addBeforeCallEdgeHook(EdgeHook.BeforeCall<State> beforeCallHook ) {
+        edgeHooks.beforeCalls.add( beforeCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addBeforeCallEdgeHook( String nodeId, EdgeHook.BeforeCall<State> beforeCallHook ) {
+        edgeHooks.beforeCalls.add( nodeId, beforeCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addAfterCallEdgeHook(EdgeHook.AfterCall<State> afterCallHook ) {
+        edgeHooks.afterCalls.add( afterCallHook );
+        return this;
+    }
+
+    public StateGraph<State> addAfterCallEdgeHook( String nodeId, EdgeHook.AfterCall<State> afterCallHook ) {
+        edgeHooks.afterCalls.add( nodeId, afterCallHook );
+        return this;
+    }
 
     public StateGraph<State> addNode(String id, Node.ActionFactory<State> actionFactory) throws GraphStateException {
         if (Objects.equals(id, END)) {
@@ -357,7 +423,10 @@ public non-sealed class StateGraph<State extends AgentState> implements GraphDef
             edge.validate(nodes);
         }
 
+        nodeHooks.validate(nodes);
+        edgeHooks.validate(edges);
     }
+
 
     /**
      * Compiles the state graph into a compiled graph.
