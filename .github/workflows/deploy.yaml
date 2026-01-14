@@ -32,6 +32,7 @@ jobs:
   deploy-javelit:
     runs-on: ubuntu-latest
     name: deploy javelit
+    needs: deploy
     steps:
       - uses: actions/checkout@v4
         with:
