@@ -13,7 +13,7 @@ LangGraph for Java. A library for building stateful, multi-agents applications w
 
 | Date         | Release        | info
 |--------------|----------------| ---
-| Jan 04, 2026 | `1.7.10` | last release
+| Jan 14, 2026 | `1.8.0-beta1` | last release
 
 ‼️ **Note:**
 > The miminum supported version is the `Java 17` 
@@ -128,7 +128,7 @@ Make sure you are using Java 17 or later.
 **Latest Stable Version (Recommended):**
 ```xml
 <properties>
-    <langgraph4j.version>1.7.10</langgraph4j.version> <!-- Check for the actual latest version -->
+    <langgraph4j.version>1.8.0-beta1</langgraph4j.version> <!-- Check for the actual latest version -->
 </properties>
 
 <!-- Optional: Add the Bill of Materials (BOM) to manage langgraph4j module versions -->
