@@ -2,6 +2,217 @@
 
 
 
+<!-- "name: v1.8.0-beta1" is a release tag -->
+
+## [v1.8.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.0-beta1) (2026-01-14)
+
+### Features
+
+ *  verify resume as node issue ([252638231b2d931](https://github.com/bsorrentino/langgraph4j/commit/252638231b2d9319400e05a580c01256d9497838))
+     > work on #309
+   
+ *  **CompiledGraph**  Add metadata updates for runnable config ([c19a021fb987d14](https://github.com/bsorrentino/langgraph4j/commit/c19a021fb987d14f1937adde75c3d20d14b96446))
+     > Refactor duplicated config metadata logic into dedicated method
+     > work on #291
+   
+ *  **StateGraph**  Add edge hooks for custom logic around edge calls ([1db6eccd80e87a5](https://github.com/bsorrentino/langgraph4j/commit/1db6eccd80e87a58d26ded065a8fd68b2efae3f8))
+     > New methods add support for before/after/wrap call hooks on edges, enabling custom logic execution around edge transitions.
+     > work on #291
+   
+ *  **EdgeHooks**  Add edge hooks management for graph processing ([13135937e1bbcbd](https://github.com/bsorrentino/langgraph4j/commit/13135937e1bbcbd3008177bf88b6dfd6c6bff5ee))
+     > - Introduce before/after/wrap hooks for edge processing with validation and execution logic
+     > work on #291
+   
+ *  **HookCalls**  Add HookCalls class for managing call lists with LIFO/FIFO ([1ded8da7452fda0](https://github.com/bsorrentino/langgraph4j/commit/1ded8da7452fda01ee6c8235cc53973c0fc6d833))
+     > New abstract class for handling hook call sequences with priority-based insertion and streaming support
+     > work on #291
+   
+ *  **EdgeHook**  Add EdgeHook interfaces for before/after/wrap call hooks ([6e3037c2c6e927c](https://github.com/bsorrentino/langgraph4j/commit/6e3037c2c6e927c36928bc977e62d0a697c6cc5f))
+     > Introduce interface definitions for hooking into edge execution flow with before, after, and wrap call callbacks
+     > work on #291
+   
+ *  **StateGraph**  add hooks by  nodeId ([ae5240e2e82d89f](https://github.com/bsorrentino/langgraph4j/commit/ae5240e2e82d89fc77cc854d4e7da7895924c048))
+     > work on #291
+   
+ *  **NodeHooks**  add hooks call handling per nodeId ([4a308ea9fc282c4](https://github.com/bsorrentino/langgraph4j/commit/4a308ea9fc282c4290fd303bcf816e3345555313))
+     > work on #291
+   
+ *  **StateGraph**  Add node hook methods for before, after, and wrap call ([519846e1f9e6241](https://github.com/bsorrentino/langgraph4j/commit/519846e1f9e62412165709af910b682d75726ec6))
+     > New methods allow adding hooks for before call, after call, and wrap call stages
+     > work on #291
+   
+ *  **StateGraph**  Add node hooks  registration ([34b0a7a5a9c4e48](https://github.com/bsorrentino/langgraph4j/commit/34b0a7a5a9c4e48e18772cf4b5466250604d9e4c))
+     > - Introduce NodeHook registration support
+     > work on #291
+   
+ *  **NodeHook**  Add NodeHook interfaces for before/after and wrap  node action call ([e3c864e1f9e9cdd](https://github.com/bsorrentino/langgraph4j/commit/e3c864e1f9e9cdd56ef09ae67725b9151bb2a181))
+     > work on #291
+   
+ *  **NodeHooks**  Add NodeHooks for managing node action hooks ([ccbd755bb8592cd](https://github.com/bsorrentino/langgraph4j/commit/ccbd755bb8592cda1583771da028b55917ca0b0a))
+     > - Introduce NodeHooks class to combine node hooks with async actions.
+     > work on #291
+   
+
+### Bug Fixes
+
+ -  **CompiledGraph**  check interruptions bug ([7e2245283a5274b](https://github.com/bsorrentino/langgraph4j/commit/7e2245283a5274b5f0d55db50c677d42eb6f9888))
+
+
+### Documentation
+
+ -  bump to next version 1.8.0-beta1 ([23590b994e4a559](https://github.com/bsorrentino/langgraph4j/commit/23590b994e4a55986400f9118c99b71cb712bb9b))
+
+ -  bump to next dev version 1.8-SNAPSHOT ([92968c4dec4a9c8](https://github.com/bsorrentino/langgraph4j/commit/92968c4dec4a9c86e57928229dfa340f30af6195))
+
+ -  **mkdocs**  Add Hooks documentation section ([3243d2b7f783abf](https://github.com/bsorrentino/langgraph4j/commit/3243d2b7f783abfef0bb540434e8fd62c14b682f))
+     > Added &#x27;Hooks&#x27; entry to how-tos navigation section in mkdocs.yml
+     > work on #291
+
+ -  **hooks**  add hooks documentation ([f097569fdc70f8c](https://github.com/bsorrentino/langgraph4j/commit/f097569fdc70f8c8d802ce9207c0c596dba340d6))
+
+ -  **mkdocs**  Add Hooks documentation section ([c0f417788057e8d](https://github.com/bsorrentino/langgraph4j/commit/c0f417788057e8d2c9e8461efbce2e79ea7ac2de))
+     > Updated navigation structure to include Hooks documentation page
+     > work on #291
+
+ -  update changelog ([d615992c6a6fb93](https://github.com/bsorrentino/langgraph4j/commit/d615992c6a6fb936fbf945fd5c3d84795de13825))
+
+
+### Refactor
+
+ -  **CompiledGraph**  Add nextNodeId to branch checkpoint state update ([3b82af3e2306932](https://github.com/bsorrentino/langgraph4j/commit/3b82af3e2306932b01a1d8a24f4cf32d31653c28))
+    > Include nextNodeId in branch checkpoint state update to track node transitions
+ > work on #309
+
+ -  **Checkpoint**  Refactor updateState to accept nextNodeId as parameter ([4889e5a3af87fc7](https://github.com/bsorrentino/langgraph4j/commit/4889e5a3af87fc77609383369f90174c714b2b33))
+    > Added nextNodeId parameter to updateState method and updated existing method to call new signature
+ > work on #309
+
+ -  **CompiledGraph**  Add nodeId parameter to Hooks processing ([b152d525836e3bc](https://github.com/bsorrentino/langgraph4j/commit/b152d525836e3bc18d4dbff4cb99750f69e236d3))
+    > work on #291
+
+ -  **NestedNodeHook**  Add nodeId parameter to method signatures for context tracking ([48f2280d9535022](https://github.com/bsorrentino/langgraph4j/commit/48f2280d95350228017dbc42982fe1ae51df6fd9))
+    > work on #291
+
+ -  **NestedEdgeHooks**  Refactor EdgeHooks to include sourceId parameter ([ae2a24aa1a5d500](https://github.com/bsorrentino/langgraph4j/commit/ae2a24aa1a5d5004d310dc4dece5e1c90d5480df))
+    > work on #291
+
+ -  **EdgeHooks**  Refactor EdgeHooks to include sourceId parameter ([404f246e9c76bb3](https://github.com/bsorrentino/langgraph4j/commit/404f246e9c76bb3235d39b0fc0c65e36f49f2af1))
+    > Updated method signatures to include sourceId parameter in multiple apply methods
+ > work on #291
+
+ -  **NodeHooks**  Add nodeId parameter to method signatures for context tracking ([e35d8eb778add9b](https://github.com/bsorrentino/langgraph4j/commit/e35d8eb778add9b3d757431852469b8c5fc9c51a))
+    > Refactored method signatures to include nodeId parameter across multiple methods to enhance context awareness and tracing capabilities in node processing pipelines.
+ > work on #291
+
+ -  **NodeHook**  Add nodeId parameter to hooks interfaces ([100874fd751f6f0](https://github.com/bsorrentino/langgraph4j/commit/100874fd751f6f05b2715ed1ca15253e157dcca7))
+    > Modified BeforeCall, AfterCall, and WrapCall interfaces to include nodeId parameter in method signatures
+ > work on #291
+
+ -  **EdgeHook**  Add sourceId parameter to EdgeHook interfaces ([c7a226ff17ee1b2](https://github.com/bsorrentino/langgraph4j/commit/c7a226ff17ee1b210e84617e0624ecffd7b19425))
+    > Updated BeforeCall, AfterCall, and WrapCall interfaces to include sourceId parameter in method signatures
+ > work on #291
+
+ -  **CompiledGraph**  Refactor method calls to use edge hooks ([7a81841b03361f4](https://github.com/bsorrentino/langgraph4j/commit/7a81841b03361f45dfbca7471e059f61a4b804e7))
+    > - Updated method invocations to utilize stateGraph edge hooks for action execution
+ > work on #291
+
+ -  **NodeHook**  Refactor method names to be more meaningful ([72925ee35c13ac7](https://github.com/bsorrentino/langgraph4j/commit/72925ee35c13ac7ed0fe693ad3611933894b1409))
+    > - Renamed &#x27;accept&#x27; to &#x27;applyBefore/applyAfter&#x27; and &#x27;apply&#x27; to &#x27;applyWrap&#x27; for consistent naming convention across interfaces
+ > work on #291
+
+ -  **NodeHooks**  update hook methods name and inherit HookCalls abstraction ([c38b7e2f160cc0a](https://github.com/bsorrentino/langgraph4j/commit/c38b7e2f160cc0a8b365c9bff2357d5150676df8))
+    > work on #291
+
+ -  **langchain4j**  replace deprecated GitHubModelsChatModel to OpenAiChatModel ([14793e16e467a54](https://github.com/bsorrentino/langgraph4j/commit/14793e16e467a54c06400c7067b31558d22f271f))
+   
+ -  **CompiledGraph**  Simplify hooks ([8c2ad6780aa1fe2](https://github.com/bsorrentino/langgraph4j/commit/8c2ad6780aa1fe2a492742cfe54a7b6890b77ba2))
+    > - Replace multiple method calls with single applyActionWithHooks method
+ > work on #291
+
+ -  **NodeHooks**  Add before/after call hooks with CompletableFuture support. ([b36dcfe6e0e4107](https://github.com/bsorrentino/langgraph4j/commit/b36dcfe6e0e4107f03d1a1d113c8fda58c51734f))
+    > work on #291
+
+ -  **CompiledGraph**  Refactor node hook execution sequence ([9d86ca31f700934](https://github.com/bsorrentino/langgraph4j/commit/9d86ca31f700934163612f925540b73c99dde39c))
+    > Split node hook execution into before/after phases for clearer state management
+ > work on #291
+
+ -  **CollectionsUtils**  Replace String.format with String::formatted ([8b75a5e460b9ba2](https://github.com/bsorrentino/langgraph4j/commit/8b75a5e460b9ba29dad4d240cd35c3a7bb4ef07c))
+   
+ -  **AgentState**  Refactor state update condition to handle partial state equality ([303ac18712ce510](https://github.com/bsorrentino/langgraph4j/commit/303ac18712ce5103f8580b0f8d98bfe41026f4ca))
+   
+ -  **NodeHook**  Removed default method implementations of BeforeCall and AfterCall interfaces. ([ceff1a4e06bd184](https://github.com/bsorrentino/langgraph4j/commit/ceff1a4e06bd184278df03eb6f160ce968df2ca2))
+    > work on #291
+
+ -  **CompiledGraph**  pass schema when apply hooks ([87013e907815d73](https://github.com/bsorrentino/langgraph4j/commit/87013e907815d739084d76fa767f70bb584fb301))
+    > work on #291
+
+ -  rename hook related methods ([13d5a764ec26418](https://github.com/bsorrentino/langgraph4j/commit/13d5a764ec264188e0fae2708ca31164ff5122cf))
+    > work on #291
+
+ -  **CompiledGraph**  Refactor action application to use node hooks ([4569e62ef251d0a](https://github.com/bsorrentino/langgraph4j/commit/4569e62ef251d0a7b0272cea92a5430209c19c2d))
+    > - Updated to use stateGraph.nodeHooks for wrapping node action calls
+ > work on #291
+
+ -  **AgentEx**  Add config parameter to interrupt method to remove deprecation ([67dad5ac3cdb304](https://github.com/bsorrentino/langgraph4j/commit/67dad5ac3cdb304089a86326bea8f2732d8a94af))
+   
+
+### ALM 
+
+ -  **javelit**  bump to next version 1.8.0-beta1 ([1d81646f2bff51a](https://github.com/bsorrentino/langgraph4j/commit/1d81646f2bff51a5e3cc2ed696b6849715075542))
+   
+ -  bump to next version 1.8.0-beta1 ([97e423dcf072f76](https://github.com/bsorrentino/langgraph4j/commit/97e423dcf072f76a420a920916e16758e7bae6ad))
+   
+ -  **how-tos**  bump to next dev version 1.8-SNAPSHOT ([6ce6c0c3477a6a3](https://github.com/bsorrentino/langgraph4j/commit/6ce6c0c3477a6a388b70cdf81b93c48ef879da7f))
+   
+ -  bump to next dev version 1.8-SNAPSHOT ([47ce5bdf8866084](https://github.com/bsorrentino/langgraph4j/commit/47ce5bdf88660848c7e9bc25175c2fac9ae32e8d))
+   
+ -  optimize local site generation ([365926b563a7860](https://github.com/bsorrentino/langgraph4j/commit/365926b563a78608e95d7b7bafc98bc5ac68dddd))
+   
+ -  bump to next dev version 1.7-SNAPSHOT ([59f0d711519371b](https://github.com/bsorrentino/langgraph4j/commit/59f0d711519371bbfcaaa6041c2414df9b38b7fc))
+   
+
+### Test 
+
+ -  verify resume as node works properly ([9fe0b88a23268b7](https://github.com/bsorrentino/langgraph4j/commit/9fe0b88a23268b7523a2c1350f1fe2028da61316))
+    > work on #309
+
+ -  **GraphTest**  use sourceId in edge hook tests and nodeId in node hook tests ([439481d9ee98d5d](https://github.com/bsorrentino/langgraph4j/commit/439481d9ee98d5d57e463595565319e714dcf791))
+    > work on #291
+
+ -  **HookTest**  use sourceId in edge hook tests and nodeId in node hook tests ([9ee25e733d3c027](https://github.com/bsorrentino/langgraph4j/commit/9ee25e733d3c027fcb409607691aacc0f6f60e28))
+    > work on #291
+
+ -  **GraphTest**  Refactor test cases for verify edge hooks ([d59523a2bc955bc](https://github.com/bsorrentino/langgraph4j/commit/d59523a2bc955bcd1196707604c6faf657ea4b77))
+    > work on #291
+
+ -  **GraphTest**  verify merging result on nested wrap call hooks ([1bae9772f1b694c](https://github.com/bsorrentino/langgraph4j/commit/1bae9772f1b694c294e3c1b4c582f665b4ac07ab))
+    > work on #291
+
+ -  **GraphTest**  verify support before/after wrap call semantics. ([4090923a37de1a4](https://github.com/bsorrentino/langgraph4j/commit/4090923a37de1a405f2737601f792091a9d4becd))
+    > - Added testNestedWrapHooks and testRawHooks to validate hook propagation and metadata merging logic.
+ > work on #291
+
+ -  verify nested hooks ([ef6a8b35a0e4437](https://github.com/bsorrentino/langgraph4j/commit/ef6a8b35a0e44372be1b86c95a1d0809122b2a19))
+    > work on #291
+
+ -  **GraphTest**  Add test for node hooks ([410415a5372f99f](https://github.com/bsorrentino/langgraph4j/commit/410415a5372f99f5d457ed2a06958864414e1b65))
+    > New test method verifies node hook registration and execution workflow with detailed logging and result merging.
+ > work on #291
+
+ -  **Issue99Test**  Update interruptAfter to use SubGraphNode.formatId ([c568603a4159fdd](https://github.com/bsorrentino/langgraph4j/commit/c568603a4159fdd0884472dd7e4ee9b1e75999ca))
+    > related to #307
+
+
+### Continuous Integration
+
+ -  **deploy**  Add  deployment for javelit using jdk 22 ([f79951df450a768](https://github.com/bsorrentino/langgraph4j/commit/f79951df450a76870570f8d4cc8e4a27df4350d0))
+   
+ -  **deploy-snapshot**  Add SNAPSHOT deployment for javelit using jdk 22 ([e50ef06e0ad354d](https://github.com/bsorrentino/langgraph4j/commit/e50ef06e0ad354da437905513a76faf650154881))
+   
+
+
+
+
 <!-- "name: v1.7.10" is a release tag -->
 
 ## [v1.7.10](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.7.10) (2026-01-04)
