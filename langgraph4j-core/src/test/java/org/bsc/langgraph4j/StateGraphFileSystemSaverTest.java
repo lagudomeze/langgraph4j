@@ -45,7 +45,9 @@ public class StateGraphFileSystemSaverTest
     public void testCheckpointSaverResubmit() throws Exception {
         int expectedSteps = 5;
 
-        StateGraph<State> workflow = new StateGraph<>(State.SCHEMA, State::new)
+        final var checkpointStore = Paths.get( rootPath, "testCheckpointSaverResubmit" );
+
+        var workflow = new StateGraph<>(State.SCHEMA, State::new)
                 .addEdge(START, "agent_1")
                 .addNode("agent_1", node_async( state -> {
                     int steps = state.steps() + 1;
@@ -60,8 +62,7 @@ public class StateGraphFileSystemSaverTest
                     return "next";
                 }), Map.of( "next", "agent_1", "exit", END) );
 
-        var saver = new FileSystemSaver( Paths.get( rootPath, "testCheckpointSaverResubmit" ),
-                                                        workflow.getStateSerializer() );
+        var saver = new FileSystemSaver( checkpointStore, workflow.getStateSerializer() );
 
         CompileConfig compileConfig = CompileConfig.builder()
                 .checkpointSaver(saver)
@@ -72,10 +73,12 @@ public class StateGraphFileSystemSaverTest
         RunnableConfig runnableConfig_1 = RunnableConfig.builder()
                                     .threadId("thread_1")
                                     .build();
+        saver.deleteFile( runnableConfig_1 );
 
         RunnableConfig runnableConfig_2 = RunnableConfig.builder()
                                             .threadId("thread_2")
                                             .build();
+        saver.deleteFile( runnableConfig_2 );
 
         try {
 
@@ -164,10 +167,12 @@ public class StateGraphFileSystemSaverTest
         RunnableConfig runnableConfig_1 = RunnableConfig.builder()
                 .threadId("thread_1")
                 .build();
+        saver.deleteFile( runnableConfig_1 );
 
         RunnableConfig runnableConfig_2 = RunnableConfig.builder()
                 .threadId("thread_2")
                 .build();
+        saver.deleteFile( runnableConfig_2 );
 
         var state = app.invoke( Map.of(), runnableConfig_1);
 
@@ -234,7 +239,7 @@ public class StateGraphFileSystemSaverTest
     public void testCheckpointSaverWithAutoRelease() throws Exception {
         int expectedSteps = 5;
 
-        StateGraph<State> workflow = new StateGraph<>(State.SCHEMA, State::new)
+        final var workflow = new StateGraph<>(State.SCHEMA, State::new)
                 .addEdge(START, "agent_1")
                 .addNode("agent_1", node_async( state -> {
                     int steps = state.steps() + 1;
@@ -316,12 +321,11 @@ public class StateGraphFileSystemSaverTest
         assertTrue( state_1.isPresent() );
         assertInstanceOf(AsyncGenerator.HasResultValue.class, iterator );
 
-        var result = ((AsyncGenerator.HasResultValue) iterator).resultValue();
+        var result = GraphResult.from(iterator);
 
-        assertTrue( result.isPresent() );
-        assertInstanceOf(BaseCheckpointSaver.Tag.class, result.get() );
-
-        tag = result.map( BaseCheckpointSaver.Tag.class::cast ).orElseThrow();
+        assertFalse( result.isEmpty() );
+        assertTrue( result.isCheckpointSaverTag() );
+        tag = result.asCheckpointSaverTag();
         tagState = tag.checkpoints().stream().map(Checkpoint::getState).findFirst();
 
         assertTrue( tagState.isPresent() );
