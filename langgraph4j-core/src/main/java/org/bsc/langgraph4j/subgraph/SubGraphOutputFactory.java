@@ -6,7 +6,7 @@ import org.bsc.langgraph4j.state.StateSnapshot;
 
 public interface SubGraphOutputFactory {
 
-    static <State extends AgentState> SubGraphOutput<State> createFormNodeOutput(NodeOutput<State> output, String subGraphId ) {
+    static <State extends AgentState> SubGraphOutput<State> createFromNodeOutput(NodeOutput<State> output, String subGraphId ) {
         if( output instanceof SubGraphOutput<State> subGraphOutput) {
             return subGraphOutput;
         }
