@@ -7,106 +7,196 @@ import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.utils.CollectionsUtils;
 
 import java.util.Map;
-import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
 
-public final class GraphResult {
-    private final InterruptionMetadata<? extends AgentState> interruption;
-    private final NodeOutput<? extends AgentState> nodeOutput;
-    private final BaseCheckpointSaver.Tag tag;
-    private final Map<String,Object> stateData;
+/**
+ * Represents the unified result of a graph execution.
+ * <p>
+ * This class encapsulates different types of results that can be produced by a graph,
+ * such as interruption metadata, node output, checkpoint tags, or raw state data.
+ * It provides methods to check the type of the result and retrieve it safely.
+ * </p>
+ */
+public record GraphResult( Object result, Type type ) {
+    public enum Type {
+        EMPTY,
+        INTERRUPTION_METADATA,
+        NODE_OUTPUT,
+        CHECKPOINT_SAVER_TAG,
+        STATE_DATA
+    }
 
-    private static final GraphResult EMPTY = new GraphResult( null, null, null, null );
+    private static final GraphResult EMPTY = new GraphResult( null, Type.EMPTY );
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Creates a {@code GraphResult} from the object returning by the AsyncGenerator obtained by StateGraph.stream() call.
+     * <p>
+     * The method attempts to determine the type of the result and wrap it in a {@code GraphResult}.
+     * Supported types are:
+     * <ul>
+     *     <li>{@code GraphResult} (returns the object itself)</li>
+     *     <li>{@code Map} (treated as state data)</li>
+     *     <li>{@code NodeOutput}</li>
+     *     <li>{@code InterruptionMetadata}</li>
+     *     <li>{@code BaseCheckpointSaver.Tag}</li>
+     * </ul>
+     * If the input is {@code null}, an empty {@code GraphResult} is returned.
+     * </p>
+     *
+     * @param result the object to wrap.
+     * @return a {@code GraphResult} instance.
+     * @throws IllegalArgumentException if the result type is not supported.
+     */
+    public static GraphResult from( Object result ) {
+
+        if( result == null ) {
+            return EMPTY;
+        }
+        if( result instanceof GraphResult graphResult ) {
+            return graphResult;
+        }
+        if( result instanceof Map<?,?>) {
+            return new GraphResult( result, Type.STATE_DATA);
+        }
+        if( result instanceof NodeOutput<?>  ) {
+            return new GraphResult( result, Type.NODE_OUTPUT);
+        }
+        if( result instanceof InterruptionMetadata<?> ) {
+            return new GraphResult( result, Type.INTERRUPTION_METADATA);
+        }
+        if( result instanceof BaseCheckpointSaver.Tag ) {
+            return new GraphResult( result, Type.CHECKPOINT_SAVER_TAG);
+        }
+        throw new IllegalArgumentException( "Invalid result type: %s".formatted(result.getClass()) );
+    }
+
+    /**
+     * Creates a {@code GraphResult} from an {@link AsyncGenerator}.
+     * <p>
+     * This method extracts the result value from the generator and wraps it in a {@code GraphResult}.
+     * </p>
+     *
+     * @param generator the generator to extract the result from.
+     * @return a {@code GraphResult} instance.
+     * @throws NullPointerException if the generator is null.
+     */
     public static GraphResult from(AsyncGenerator<?> generator) {
         requireNonNull( generator, "generator cannot be null");
 
-        final Optional<Object> result = AsyncGenerator.resultValue( generator );
-        if( result.isEmpty() ) {
-            return EMPTY;
-        }
-        if( result.get() instanceof Map<?,?> stateData) {
-            return new GraphResult( null, null, null, (Map<String,Object>)stateData );
-        }
-        if( result.get() instanceof NodeOutput<?> nodeOutput ) {
-            return new GraphResult( null, nodeOutput, null, null );
-        }
-        if( result.get() instanceof InterruptionMetadata<?> interruption ) {
-            return new GraphResult( interruption, null, null, null );
-        }
-        if( result.get() instanceof BaseCheckpointSaver.Tag tag ) {
-            return new GraphResult(null, null, tag, null);
-        }
-        return EMPTY;
+       return from( AsyncGenerator.resultValue( generator ).orElse(null) );
     }
 
-    private GraphResult(InterruptionMetadata<? extends AgentState> interruption,
-                        NodeOutput<? extends AgentState> nodeOutput,
-                        BaseCheckpointSaver.Tag tag,
-                        Map<String,Object> stateData) {
-        this.interruption = interruption;
-        this.nodeOutput = nodeOutput;
-        this.tag = tag;
-        this.stateData = stateData;
-    }
 
+    /**
+     * Checks if the result is empty (i.e., contains no data).
+     *
+     * @return true if the result is empty, false otherwise.
+     */
     public boolean isEmpty() {
-        return ( interruption == null && nodeOutput == null && tag == null && stateData ==  null );
+        return type == Type.EMPTY;
     }
 
+    /**
+     * Checks if the result contains interruption metadata.
+     *
+     * @return true if interruption metadata is present, false otherwise.
+     */
     public boolean isInterruptionMetadata() {
-        return interruption != null;
+        return type == Type.INTERRUPTION_METADATA;
     }
 
+    /**
+     * Retrieves the result as {@link InterruptionMetadata}.
+     *
+     * @param <State> the type of the agent state.
+     * @return the interruption metadata.
+     * @throws IllegalStateException if the result does not contain interruption metadata.
+     */
     @SuppressWarnings("unchecked")
     public <State extends AgentState> InterruptionMetadata<State> asInterruptionMetadata() {
-        return (InterruptionMetadata<State>)ofNullable(interruption)
-                .orElseThrow( () -> new IllegalStateException("Result doesn't contain an interruption metadata object") );
+        if( isInterruptionMetadata()) {
+            return (InterruptionMetadata<State>)result;
+        }
+        throw new IllegalStateException("Result doesn't contain an interruption metadata object");
     }
 
+    /**
+     * Checks if the result contains node output.
+     *
+     * @return true if node output is present, false otherwise.
+     */
     public boolean isNodeOutput() {
-        return nodeOutput != null;
+        return type == Type.NODE_OUTPUT;
     }
 
+    /**
+     * Retrieves the result as {@link NodeOutput}.
+     *
+     * @param <State> the type of the agent state.
+     * @return the node output.
+     * @throws IllegalStateException if the result does not contain node output.
+     */
     @SuppressWarnings("unchecked")
     public <State extends AgentState> NodeOutput<State> asNodeOutput() {
-        return (NodeOutput<State>)ofNullable(nodeOutput)
-                .orElseThrow( () -> new IllegalStateException("Result doesn't contain a node output object") );
+        if( isNodeOutput() ) {
+            return (NodeOutput<State>)result;
+        }
+        throw new IllegalStateException("Result doesn't contain a node output object");
     }
 
-    public boolean isTag() {
-        return tag != null;
+    /**
+     * Checks if the result contains a checkpoint tag.
+     *
+     * @return true if a tag is present, false otherwise.
+     */
+    public boolean isCheckpointSaverTag() {
+        return type == Type.CHECKPOINT_SAVER_TAG;
     }
 
-    public BaseCheckpointSaver.Tag asTag() {
-        return ofNullable(tag)
-                .orElseThrow( () -> new IllegalStateException("Result doesn't contain a tag object") );
+    /**
+     * Retrieves the result as a {@link BaseCheckpointSaver.Tag}.
+     *
+     * @return the checkpoint tag.
+     * @throws IllegalStateException if the result does not contain a tag.
+     */
+    public BaseCheckpointSaver.Tag asCheckpointSaverTag() {
+        if( isCheckpointSaverTag() ) {
+            return (BaseCheckpointSaver.Tag)result;
+        }
+        throw new IllegalStateException("Result doesn't contain a tag object");
     }
 
+    /**
+     * Checks if the result contains state data.
+     *
+     * @return true if state data is present, false otherwise.
+     */
     public boolean isStateData() {
-        return stateData != null;
+        return type == Type.STATE_DATA;
     }
 
+    /**
+     * Retrieves the result as a map of state data.
+     *
+     * @return the state data map.
+     * @throws IllegalStateException if the result does not contain state data.
+     */
+    @SuppressWarnings("unchecked")
     public Map<String,Object> asStateData() {
-        return ofNullable(stateData)
-                .orElseThrow( () -> new IllegalStateException("Result doesn't contain a state object"));
+        if( isStateData() ) {
+            return (Map<String,Object>)result;
+        }
+        throw new IllegalStateException("Result doesn't contain a state object");
     }
 
     @Override
     public String toString() {
-        if( isInterruptionMetadata() ) {
-            return interruption.toString();
+        if( isStateData() ) {
+            return CollectionsUtils.toString(asStateData());
         }
-        if( isNodeOutput() ) {
-            return nodeOutput.toString();
-        }
-        if( isTag() ) {
-            return tag.toString();
-        }
-        return CollectionsUtils.toString(stateData);
+        return result.toString();
+
     }
 
 }
