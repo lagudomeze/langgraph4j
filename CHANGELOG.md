@@ -2,12 +2,16 @@
 
 
 
-<!-- "name: v1.8.0-beta1" is a release tag -->
+<!-- "name: v1.8.0-beta2" is a release tag -->
 
-## [v1.8.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.0-beta1) (2026-01-14)
+## [v1.8.0-beta2](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.0-beta2) (2026-01-17)
 
 ### Features
 
+ *  **GraphResult**  Add GraphResult class for handling async generator results ([5f72b26f5d7eafc](https://github.com/bsorrentino/langgraph4j/commit/5f72b26f5d7eafcee5645412d4b0c2a91d678426))
+     > New class provides methods to check and retrieve different result types from async generator operations
+     > work on #299
+   
  *  verify resume as node issue ([252638231b2d931](https://github.com/bsorrentino/langgraph4j/commit/252638231b2d9319400e05a580c01256d9497838))
      > work on #309
    
@@ -60,7 +64,13 @@
 
 ### Documentation
 
- -  bump to next version 1.8.0-beta1 ([23590b994e4a559](https://github.com/bsorrentino/langgraph4j/commit/23590b994e4a55986400f9118c99b71cb712bb9b))
+ -  bump to next version 1.8.0-beta2 ([60b018e7ca52c7b](https://github.com/bsorrentino/langgraph4j/commit/60b018e7ca52c7b7170ec68124897bae430995f8))
+
+ -  Update documentation for CompileConfig, RunnableConfig and GraphResult ([d892a3342f78ad9](https://github.com/bsorrentino/langgraph4j/commit/d892a3342f78ad9f4a3a90745de83a35dc889b32))
+
+ -  bump to next dev version 1.8-SNAPSHOT ([60785fcd32eeeb2](https://github.com/bsorrentino/langgraph4j/commit/60785fcd32eeeb20aa4510ca4ab40bbebbbe96ec))
+
+ -  update changelog ([5f882cd145ae3d6](https://github.com/bsorrentino/langgraph4j/commit/5f882cd145ae3d6ab865187bd29fff03b11bc512))
 
  -  bump to next dev version 1.8-SNAPSHOT ([92968c4dec4a9c8](https://github.com/bsorrentino/langgraph4j/commit/92968c4dec4a9c86e57928229dfa340f30af6195))
 
@@ -79,6 +89,15 @@
 
 ### Refactor
 
+ -  **CompiledGraph**  introduce use of GraphResult ([11763108be87b8b](https://github.com/bsorrentino/langgraph4j/commit/11763108be87b8b211ddec879b68f1f84cff9bd2))
+    > work on #299
+
+ -  **GraphResult**  Refactor GraphResult to use record with type enum ([0f37202ac8a486d](https://github.com/bsorrentino/langgraph4j/commit/0f37202ac8a486d402147c9d3c17f773d1a611db))
+    > Replaced complex class with record structure containing result object and type enum. Simplified type checking and data retrieval methods while maintaining compatibility with existing usage patterns.
+ > work on #299
+
+ -  correct the method name ([d4a504f4242d2a2](https://github.com/bsorrentino/langgraph4j/commit/d4a504f4242d2a287e01e287952795004f606301))
+   
  -  **CompiledGraph**  Add nextNodeId to branch checkpoint state update ([3b82af3e2306932](https://github.com/bsorrentino/langgraph4j/commit/3b82af3e2306932b01a1d8a24f4cf32d31653c28))
     > Include nextNodeId in branch checkpoint state update to track node transitions
  > work on #309
@@ -158,10 +177,13 @@
 
 ### ALM 
 
- -  **javelit**  bump to next version 1.8.0-beta1 ([1d81646f2bff51a](https://github.com/bsorrentino/langgraph4j/commit/1d81646f2bff51a5e3cc2ed696b6849715075542))
+ -  **javelit**  bump to next version 1.8.0-beta2 ([f3ca6fef460ebf5](https://github.com/bsorrentino/langgraph4j/commit/f3ca6fef460ebf54263691b0367fa533cec3c105))
    
- -  bump to next version 1.8.0-beta1 ([97e423dcf072f76](https://github.com/bsorrentino/langgraph4j/commit/97e423dcf072f76a420a920916e16758e7bae6ad))
+ -  bump to next version 1.8.0-beta2 ([299ae35f9ac42de](https://github.com/bsorrentino/langgraph4j/commit/299ae35f9ac42dea3f1b30d8a990758221c48adf))
    
+ -  **pom**  Update async.generator version to 4.0.0 ([c03518dfa157b01](https://github.com/bsorrentino/langgraph4j/commit/c03518dfa157b01d9453aeb71803bc75b850365a))
+    > Removed beta version and updated to stable 4.0.0
+
  -  **how-tos**  bump to next dev version 1.8-SNAPSHOT ([6ce6c0c3477a6a3](https://github.com/bsorrentino/langgraph4j/commit/6ce6c0c3477a6a388b70cdf81b93c48ef879da7f))
    
  -  bump to next dev version 1.8-SNAPSHOT ([47ce5bdf8866084](https://github.com/bsorrentino/langgraph4j/commit/47ce5bdf88660848c7e9bc25175c2fac9ae32e8d))
@@ -172,6 +194,13 @@
    
 
 ### Test 
+
+ -  introduce use of GraphResult ([d0706209d5be705](https://github.com/bsorrentino/langgraph4j/commit/d0706209d5be705247bada152cb33ebd4ecd2456))
+    > #299
+
+ -  Refactor result extraction using GraphResult ([0f8f8f728097889](https://github.com/bsorrentino/langgraph4j/commit/0f8f8f72809788924709443341c3cd7f64a065cb))
+    > - Replace AsyncGenerator.resultValue() with GraphResult.from() for state data conversion
+ > work on #299
 
  -  verify resume as node works properly ([9fe0b88a23268b7](https://github.com/bsorrentino/langgraph4j/commit/9fe0b88a23268b7523a2c1350f1fe2028da61316))
     > work on #309
@@ -201,6 +230,38 @@
 
  -  **Issue99Test**  Update interruptAfter to use SubGraphNode.formatId ([c568603a4159fdd](https://github.com/bsorrentino/langgraph4j/commit/c568603a4159fdd0884472dd7e4ee9b1e75999ca))
     > related to #307
+
+
+### Continuous Integration
+
+ -  **settings-template**  Add dev profile with maven repositories configurations ([2ae4777d1286bbf](https://github.com/bsorrentino/langgraph4j/commit/2ae4777d1286bbfdad5885952efdb2038dfade78))
+   
+ -  **deploy**  Add dependency on deploy job ([d116af33a330497](https://github.com/bsorrentino/langgraph4j/commit/d116af33a33049716832304597e0594ff5f3073d))
+   
+ -  **deploy-snapshot**  Add dependency on deploy job ([0e6472824d48538](https://github.com/bsorrentino/langgraph4j/commit/0e6472824d4853831db2c71e7246971d6d32fc46))
+   
+
+
+
+
+<!-- "name: v1.8.0-beta1" is a release tag -->
+
+## [v1.8.0-beta1](https://github.com/bsorrentino/langgraph4j/releases/tag/v1.8.0-beta1) (2026-01-14)
+
+
+
+### Documentation
+
+ -  bump to next version 1.8.0-beta1 ([23590b994e4a559](https://github.com/bsorrentino/langgraph4j/commit/23590b994e4a55986400f9118c99b71cb712bb9b))
+
+
+
+### ALM 
+
+ -  **javelit**  bump to next version 1.8.0-beta1 ([1d81646f2bff51a](https://github.com/bsorrentino/langgraph4j/commit/1d81646f2bff51a5e3cc2ed696b6849715075542))
+   
+ -  bump to next version 1.8.0-beta1 ([97e423dcf072f76](https://github.com/bsorrentino/langgraph4j/commit/97e423dcf072f76a420a920916e16758e7bae6ad))
+   
 
 
 ### Continuous Integration
