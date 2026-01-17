@@ -89,7 +89,7 @@ public record SubCompiledGraphNodeAction<State extends AgentState>(
 //            }
 
             var generator = subGraph.stream(input, subGraphRunnableConfig)
-                    .map( n -> SubGraphOutputFactory.createFormNodeOutput( n, nodeId) );
+                    .map( n -> SubGraphOutputFactory.createFromNodeOutput( n, nodeId) );
 
             return completedFuture( Map.of("%s_%s".formatted(subGraphId(), UUID.randomUUID()), generator));
 
