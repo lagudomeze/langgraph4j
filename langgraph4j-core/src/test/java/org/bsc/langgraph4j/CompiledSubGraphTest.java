@@ -44,7 +44,7 @@ public class CompiledSubGraphTest {
     static class WrapCallHookSubgraphAware implements NodeHook.WrapCall<MyState> {
         record Item( String nodeId, String lastPathElement ) {}
 
-        private Deque<Item> subgraphStack = new ArrayDeque<>();
+        private final Deque<Item> subgraphStack = new ArrayDeque<>();
 
         private String lastElement( GraphPath path ) {
             return path.lastElement().orElse("__root__");
