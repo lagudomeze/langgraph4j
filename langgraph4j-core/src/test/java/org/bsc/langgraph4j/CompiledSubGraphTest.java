@@ -1,19 +1,22 @@
 package org.bsc.langgraph4j;
 
+import org.bsc.async.AsyncGenerator;
 import org.bsc.langgraph4j.action.AsyncNodeActionWithConfig;
 import org.bsc.langgraph4j.checkpoint.BaseCheckpointSaver;
 import org.bsc.langgraph4j.checkpoint.MemorySaver;
 import org.bsc.langgraph4j.exception.SubGraphInterruptionException;
+import org.bsc.langgraph4j.hook.NodeHook;
 import org.bsc.langgraph4j.internal.node.Node;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.serializer.std.ObjectStreamStateSerializer;
 import org.bsc.langgraph4j.state.AgentState;
 import org.bsc.langgraph4j.subgraph.SubGraphOutput;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -38,10 +41,64 @@ public class CompiledSubGraphTest {
         }
     }
 
+    static class WrapCallHookSubgraphAware implements NodeHook.WrapCall<MyState> {
+        record Item( String nodeId, String lastPathElement ) {}
+
+        private Deque<Item> subgraphStack = new ArrayDeque<>();
+
+        private String lastElement( GraphPath path ) {
+            return path.lastElement().orElse("__root__");
+        }
+
+        private Optional<Item> isSubgraphEnded(RunnableConfig config) {
+            var isSubgraphEnded = !subgraphStack.isEmpty() &&
+                    Objects.equals( subgraphStack.peek().lastPathElement(), lastElement(config.graphPath()));
+            if( isSubgraphEnded ) {
+                return Optional.of(subgraphStack.pop());
+            }
+            return Optional.empty();
+        }
+
+        private Optional<Item> isSubgraphRequested( String nodeId, RunnableConfig config, Map<String,Object> result ) {
+
+            var isSubgraphRequested =  result.values().stream().anyMatch( v -> v instanceof AsyncGenerator<?> );
+            if( isSubgraphRequested ) {
+                var item = new Item(nodeId, lastElement(config.graphPath()));
+                subgraphStack.push( item );
+                return Optional.of(item);
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public CompletableFuture<Map<String, Object>> applyWrap(String nodeId,
+                                                                MyState state,
+                                                                RunnableConfig config,
+                                                                AsyncNodeActionWithConfig<MyState> action) {
+
+            isSubgraphEnded( config ).ifPresent(
+                    item -> System.out.printf("[%s] ended%n", item.nodeId()));
+
+            System.out.printf("[%s] start%n", nodeId);
+
+            return action.apply( state, config ).whenComplete( (result, ex ) -> {
+
+                if( ex != null ) {
+                    return;
+                }
+
+                isSubgraphRequested( nodeId, config, result ).ifPresentOrElse(
+                        item -> System.out.printf( "subgraph requested: [%s]%n", item ),
+                        () -> System.out.printf("[%s] end%n", nodeId));
+            });
+        }
+    }
+
     static class NodeActionBuilder {
         String nodeId;
         GraphPath basePath;
         String attributeKey;
+        boolean enableLog = true;
 
         public NodeActionBuilder nodeId( String nodeId ) {
             this.nodeId = nodeId;
@@ -55,7 +112,10 @@ public class CompiledSubGraphTest {
             this.attributeKey = attributeKey;
             return this;
         }
-
+        public NodeActionBuilder enableLog( boolean enable ) {
+            this.enableLog = enable;
+            return this;
+        }
 
         public Node.ActionFactory<MyState> build() {
             assertNotNull( nodeId );
@@ -66,12 +126,12 @@ public class CompiledSubGraphTest {
                 assertEquals(nodeId, config.nodeId());
 
                 if( basePath != null ) {
-                    log.info("graphPath: {}", config.graphPath());
+                    if( enableLog ) log.info("graphPath: {}", config.graphPath());
                     assertEquals( basePath, config.graphPath() );
                 }
 
                 if(  compileConfig.graphId().isPresent() ) {
-                    log.info("graphId: {} config.graphId: {}", compileConfig.graphId().get(), config.graphId().orElse("<NONE>>"));
+                    if( enableLog ) log.info("graphId: {} config.graphId: {}", compileConfig.graphId().get(), config.graphId().orElse("<NONE>>"));
                     assertTrue( config.graphId().isPresent() );
                     assertEquals(compileConfig.graphId().get(), config.graphId().get() );
                 }
@@ -505,4 +565,80 @@ public class CompiledSubGraphTest {
                         "[bar2]",
                         "[main2]"), state.messages() );
     }
+
+    @Test
+    public  void compiledSubGraphHookTest() throws Exception {
+
+        final var graphCompile = GraphCompileEnum.GRAPH_WITH_ID;
+
+        final var subGraphNodeId = "subgraph1";
+        final var subSubGraphNodeId = "subgraph2" ;
+
+        var subGraphBasePath = graphCompile.config.graphId()
+                .map( graphId ->  GraphPath.of( graphId, subGraphNodeId ) )
+                .orElseGet( () -> GraphPath.of( subGraphNodeId ) );
+        var subSubGraphBasePath = subGraphBasePath.append( subSubGraphNodeId );
+
+        var subSubGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addWrapCallNodeHook( new WrapCallHookSubgraphAware() )
+                .addNode("foo1", actionBuilder().enableLog(false).nodeId("foo1").path(subSubGraphBasePath).build())
+                .addNode("foo2", actionBuilder().enableLog(false).nodeId("foo2").path(subSubGraphBasePath).build())
+                .addNode("foo3", actionBuilder().enableLog(false).nodeId("foo3").path(subSubGraphBasePath).build())
+                .addEdge(StateGraph.START, "foo1")
+                .addEdge("foo1", "foo2")
+                .addEdge("foo2", "foo3")
+                .addEdge("foo3", StateGraph.END)
+                .compile( CompileConfig.builder()
+                        .graphId("subSubGraph")
+                        .build());
+
+        var subGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addWrapCallNodeHook( new WrapCallHookSubgraphAware() )
+                .addNode("bar1", actionBuilder().enableLog(false).nodeId("bar1").path(subGraphBasePath).build())
+                .addNode(subSubGraphNodeId, subSubGraph)
+                .addNode("bar2", actionBuilder().enableLog(false).nodeId("bar2").path(subGraphBasePath).build())
+                .addEdge(StateGraph.START, "bar1")
+                .addEdge("bar1", subSubGraphNodeId)
+                .addEdge(subSubGraphNodeId, "bar2")
+                .addEdge("bar2", StateGraph.END)
+                .compile( CompileConfig.builder()
+                        .graphId("subGraph")
+                        .build());
+
+        var stateGraph = new StateGraph<>(MyState.SCHEMA, MyState::new)
+                .addWrapCallNodeHook( new WrapCallHookSubgraphAware() )
+                .addNode("main1", actionBuilder().enableLog(false).nodeId("main1").build())
+                .addNode(subGraphNodeId, subGraph)
+                .addNode("main2",  actionBuilder().enableLog(false).nodeId("main2").build())
+                .addEdge(StateGraph.START, "main1")
+                .addEdge("main1", subGraphNodeId)
+                .addEdge(subGraphNodeId, "main2")
+                .addEdge("main2", StateGraph.END)
+                .compile( graphCompile.config );
+
+        var runnableConfig = RunnableConfig.builder()
+                    .build();
+
+        var input = GraphInput.args(Map.of());
+
+        var generator = stateGraph.stream(input, runnableConfig);
+
+        var output = generator.stream()
+                //.peek( out -> log.info("output: {}", out) )
+                .reduce((a, b) -> b);
+
+        assertTrue( output.isPresent() );
+        assertTrue( output.get().isEND() );
+        final var state = output.get().state();
+
+        assertIterableEquals(List.of(
+                "[main1]",
+                "[bar1]",
+                "[foo1]",
+                "[foo2]",
+                "[foo3]",
+                "[bar2]",
+                "[main2]"), state.messages() );
+    }
+
 }
