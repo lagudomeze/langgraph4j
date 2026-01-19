@@ -583,25 +583,17 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
     class AsyncNodeGenerator<Output extends NodeOutput<State>> extends AsyncGenerator.BaseCancellable<Output> {
 
         static class Context {
-            record ReturnFromEmbed( Object value ) {
-                <T> Optional<T> value( TypeRef<T> ref ) {
-                    return ofNullable(value)
-                            .flatMap(ref::cast);
-                }
-
-            }
-
             private Map<String,Object> currentState;
             private String currentNodeId;
             private String nextNodeId;
             private String resumeFrom;
-            private ReturnFromEmbed returnFromEmbed;
+            private GraphResult returnFromEmbed;
 
             Context( Map<String,Object> initState ) {
                 currentNodeId = START;
                 nextNodeId = null;
                 resumeFrom = null;
-                returnFromEmbed = null;
+                returnFromEmbed = GraphResult.empty();
                 currentState = initState;
             }
 
@@ -610,14 +602,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 nextNodeId = cp.getNextNodeId();
                 resumeFrom = cp.getNodeId();
                 currentState = cp.getState();
-                returnFromEmbed = null;
+                returnFromEmbed = GraphResult.empty();
             }
 
             void reset() {
                 currentNodeId = null;
                 nextNodeId = null;
                 resumeFrom = null;
-                returnFromEmbed = null;
+                returnFromEmbed = GraphResult.empty();
             }
 
             Map<String,Object> currentState() {
@@ -650,14 +642,14 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 return result;
             }
 
-            Optional<ReturnFromEmbed> getReturnFromEmbedAndReset() {
-                var result = ofNullable(returnFromEmbed);
-                returnFromEmbed = null;
+            GraphResult getReturnFromEmbedAndReset() {
+                var result = returnFromEmbed;
+                returnFromEmbed = GraphResult.empty();
                 return result;
             }
 
-            void setReturnFromEmbedWithValue( Object value ) {
-                returnFromEmbed = new ReturnFromEmbed(value);
+            void setReturnFromEmbedWithValue( GraphResult value ) {
+                returnFromEmbed = requireNonNull(value, "value cannot be null");
             }
 
         }
@@ -740,7 +732,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                                 final var result = GraphResult.from(data);
 
                                 if( result.isInterruptionMetadata()  ) {
-                                    context.setReturnFromEmbedWithValue( data );
+                                    context.setReturnFromEmbedWithValue( result );
                                     return;
                                 }
                                 if ( result.isStateData() ) {
@@ -767,7 +759,7 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                             var nextNodeCommand = nextNodeId(context.currentNodeId(), context.currentState(), config) ;
                             context.setNextNodeId(nextNodeCommand.gotoNode());
                             context.setCurrentState( nextNodeCommand.update() );
-                            context.setReturnFromEmbedWithValue(null);
+                            context.setReturnFromEmbedWithValue( GraphResult.empty() );
                         });
                     })
                     ;
@@ -843,12 +835,10 @@ public final class CompiledGraph<State extends AgentState> implements GraphDefin
                 final var returnFromEmbed = context.getReturnFromEmbedAndReset();
 
                 // IS IT A RESUME FROM EMBED ?
-                if( returnFromEmbed.isPresent() ) {
+                if( !returnFromEmbed.isEmpty() ) {
 
-                    var interruption = returnFromEmbed.get().value(new TypeRef<InterruptionMetadata<State>>(){} );
-
-                    if( interruption.isPresent() ) {
-                        return Data.done( interruption.get() );
+                    if( returnFromEmbed.isInterruptionMetadata() ) {
+                        return Data.done( returnFromEmbed.asInterruptionMetadata() );
                     }
 
                     return Data.of( nodeOutput() );
