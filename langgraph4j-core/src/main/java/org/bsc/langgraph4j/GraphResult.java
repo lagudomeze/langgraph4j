@@ -30,6 +30,15 @@ public record GraphResult( Object result, Type type ) {
     private static final GraphResult EMPTY = new GraphResult( null, Type.EMPTY );
 
     /**
+     * Returns an empty {@code GraphResult}.
+     *
+     * @return the empty result.
+     */
+    public static GraphResult empty() {
+        return EMPTY;
+    }
+
+    /**
      * Creates a {@code GraphResult} from the object returning by the AsyncGenerator obtained by StateGraph.stream() call.
      * <p>
      * The method attempts to determine the type of the result and wrap it in a {@code GraphResult}.
